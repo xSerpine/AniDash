@@ -1,0 +1,61 @@
+html, body {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  background: #0b132b;
+  font-family: PT Sans Narrow; 
+}
+
+#root {
+  min-height: 100%;
+  position: relative;
+}
+
+a {
+  text-decoration: none;
+  color: #FFF05A;
+}
+
+.AnimeDetails{
+  background-color: #0b132b;
+  color: white;
+  height: 201px;
+  width:300px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.AnimeDetails h3, .AnimeDetails b{
+  color: #FFF05A;
+}
+
+.AnimeDetails .details{
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.AnimeDetails div p{
+  width: 33%;
+  box-sizing: border-box;
+}
+
+.countdown {
+  position: relative;
+  display: flex;
+  width: inherit;
+  height: 2.5rem !important;
+  top: -2.8rem;
+  text-align: center;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .infiniteScroll {
+    height: 400px !important;
+  }
+  .infiniteScrollItems {
+    display: none;
+  }
+}
