@@ -69,7 +69,7 @@ function Mangalistings({userData}) {
                     currentPage={Top.currentPage}
                 /> 
             }
-            <ContentInfo listContent>
+            <ContentInfo listContent last>
                 <div>
                     <Titulo primary>Options</Titulo>
                     {["My Manga List", "Top Manga"].map((options, index) => (
@@ -79,7 +79,7 @@ function Mangalistings({userData}) {
                 {loading || topManga.length === 0 ? 
                     <Spinner />
                     :
-                    <ListItems animelist last>
+                    <ListItems animelist>
                         {favorites.length === 0 && choice === "My Manga List" && <NoContent><Link to="/search">Add</Link> your favorite manga to this list!</NoContent> }
 
                         {choice === "My Manga List" && 

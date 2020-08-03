@@ -207,7 +207,7 @@ function UserProfile({ userData, setUser }) {
                         <label htmlFor="numberPagesProfile">Items on Profile's pagination</label>
                     </InputWrapper>
                     <Btn onClick={updatePosts} primary>Update values</Btn>
-                    <Btn style={{marginTop: "10%"}} onClick={handleEdit} secondary>Back to my profile</Btn>
+                    <Btn style={{marginTop: "10%", marginBottom: "10%"}} onClick={handleEdit} secondary>Back to my profile</Btn>
                 </BasicWrapper>
             }
             {loading ?
