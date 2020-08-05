@@ -18,7 +18,6 @@ module.exports = {
                 "insert into activity (id_utilizador, username, type_content, action, id_content, content) values ($1,$2,$3,$4,$5,$6)", [user.rows[0].id_utilizador, user.rows[0].username, "anime", "added", id_anime, nome]
             );
 
-  
             res.json("OK");
         } catch (err) {
             console.error(err.message);

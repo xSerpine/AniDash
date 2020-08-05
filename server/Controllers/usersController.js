@@ -4,11 +4,11 @@ const { cloudinary } = require("../Utils/Cloudinary");
 
 module.exports = {
     postRegister : async function(req, res){
-        const { username, email, password, avatar } = req.body;
-
         let existe_username, existe_email;
 
         try { 
+            const { username, email, password, avatar } = req.body;
+
             const user = await pool.query(
                 "select username, email from utilizadores"
             );
@@ -40,9 +40,9 @@ module.exports = {
     },
 
     putAvatar : async function(req, res){
-        const { email, avatar } = req.body;
-
         try { 
+            const { email, avatar } = req.body;
+            
             const uploadedResponse = await cloudinary.uploader.upload(avatar, {
                 upload_preset: "dmpknj3w"
             });

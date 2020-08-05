@@ -4,11 +4,10 @@ const GeradorTokens = require("../Utils/GeradorTokens");
 
 module.exports = {
     postLogin : async function(req, res){
-        const { user, password } = req.body;
-
         let users;
 
         try {
+            const { user, password } = req.body;
 
             if(user.includes("@"))
                 users = await pool.query("SELECT * FROM utilizadores WHERE email = $1", [user.trim()]);  

@@ -23,12 +23,15 @@ module.exports = {
 
     getFollows : async function(req, res){
         let all_followers_ids = [], all_following_ids = [], info_followers, info_following, contagem_followers, contagem_following;
+        
         try { 
             const { username } = req.params;
 
             const user = await pool.query("select id_utilizador from utilizadores where username = $1", [username]);
                
+            //Encontra todos os utilizadores seguidos pelo 'username'
             const user_following = await pool.query("select id_utilizador from follows where id_follower = $1", [user.rows[0].id_utilizador]);
+            //Se existirem, os seus IDs são mapeados para um array auxiliar e são guardadas as suas informação numa variável auxiliar
             if(user_following.rows.length > 0) {
                 user_following.rows.map(user_fol => (
                     all_following_ids.push(user_fol.id_utilizador)
@@ -39,7 +42,9 @@ module.exports = {
             }
             else info_following = []
 
+            //Encontra todos os utilizadores que seguem o 'username'
             const user_followers = await pool.query("select id_follower from follows where id_utilizador = $1", [user.rows[0].id_utilizador]);
+            //Se existirem, os seus IDs são mapeados para um array auxiliar e são guardadas as suas informação numa variável auxiliar
             if(user_followers.rows.length > 0) {
                 user_followers.rows.map(user_fol => (
                     all_followers_ids.push(user_fol.id_follower)
@@ -50,9 +55,10 @@ module.exports = {
             }
             else info_followers = []
 
+            //Recebemos a contagem dos seguidores
             const countFollowers = await pool.query("select count(id_follower) as followers from follows where id_utilizador = $1", [user.rows[0].id_utilizador]);
             contagem_followers = countFollowers.rows[0];
-
+            //Recebemos a contagem dos que o 'username' segue
             const countFollowing = await pool.query("select count(id_utilizador) as followers from follows where id_follower = $1", [user.rows[0].id_utilizador]);
             contagem_following = countFollowing.rows[0];
 
