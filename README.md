@@ -2,7 +2,7 @@
 
 Uses the Jikan API for the anime/manga data.
 
-Some of the features:
+## Some of the features:
    - Can look up any anime/manga you might be interested in
    - Can add anime/manga to your own list which can be seen on yout user profile
    - Can check which anime is airing today and/or tomorrow aswell as a countdown to the episode in question
