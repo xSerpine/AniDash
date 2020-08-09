@@ -1,5 +1,4 @@
 # AniDash
-A platform where users can follow each other aswell as sharing their activity. You can add or remove anime/manga to your own list.
 
 Uses the Jikan API for the anime/manga data.
 
