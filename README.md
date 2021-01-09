@@ -1,5 +1,7 @@
 # AniDash
 
+Fullstack anime/manga platform built with PostgreSQL, Express, React and Node.js.
+
 Uses the Jikan API for the anime/manga data.
 
 ## Some of the features:
