@@ -14,4 +14,5 @@ Uses the Jikan API for the anime/manga data.
    - Guest session
     
 Client is hosted on Netlify
+
 API is hosted on Heroku, using free dynos, so it might take sometime when first starting up the application
