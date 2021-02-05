@@ -10,13 +10,12 @@ function ReadMoreReadLess({text}) {
     
     return (
         <TextWrapper>
-            {   isTruncated || text.length < 500 ?   
+            {isTruncated || text.length < 250 ?   
                 text
                 :
-                `${text.slice(0, 500)}...`
+                `${text.slice(0, 250)}...`
             }
-            {   (isTruncated && text.length > 500) && <p style={{cursor: "pointer"}} onClick={handleReadMore}>Show Less</p>    } 
-            {   (!isTruncated && text.length > 500) && <p style={{cursor: "pointer"}} onClick={handleReadMore}>Show more</p>   }
+            {text.length > 250 && <p style={{cursor: 'pointer'}} onClick={handleReadMore}>{isTruncated ? 'Show less' : 'Show more'}</p>} 
         </TextWrapper>                    
     );
 }

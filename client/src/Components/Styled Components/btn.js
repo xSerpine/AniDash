@@ -6,6 +6,7 @@ const Btn = styled.button`
     color: #FFF05A;
     padding: 0.5em 1em;
     margin-top: 5%;
+    cursor: pointer;
     ${props => props.primary && css`
         background: #0b132b;
         color: #FFF05A;
@@ -51,7 +52,7 @@ const ToggleBtn = styled.button`
     box-sizing: border-box;
     width: 30px;
     height: 24px;
-    @media (min-width: 769px) {
+    @media (min-width: 801px) {
         display: none;
     }
 `;

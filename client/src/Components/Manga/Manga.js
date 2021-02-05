@@ -1,66 +1,60 @@
-import React, { useState, useEffect, Fragment } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
-import moment from 'moment-timezone';
-import { ContentInfoWrapper, ContentInfo, TituloWrapper, TextWrapper } from '../Styled Components/content';
-import { Titulo, SubTitulo } from '../Styled Components/text';
-import { Space } from '../Styled Components/navbar';
+import { ContentInfoBar, ContentWrapper } from '../Styled Components/content';
+import { SpacingElement } from '../Styled Components/navbar';
 import { Spinner } from '../Styled Components/loader';
-import Pagination from '../Geral/Pagination';
-import usePaginate from '../Utils/usePaginate';
-import ReadMoreReadLess from '../Utils/useReadMoreReadLess';
+import GenericContentInformation from '../GenericComponents/GenericContentInformation';
+import UserContext from '../../Context/UserContext';
+import GenericContentOverview from '../GenericComponents/GenericContentOverview';
+import MangaRecommendations from './MangaRecommendations';
+import MangaCharacters from './MangaCharacters';
+import MangaStats from './MangaStats';
+import MangaTracking from './MangaTracking';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-function UserManga({userData}) {
+function MangaInfo({ guest }) {
+    const user = useContext(UserContext);
+    const history = useHistory();
+
     const [loading, setLoading] = useState(true);
     const [update, setUpdate] = useState(false);
-    const [resultsManga, setResultsManga] = useState([]);
-    const [resultsReviews, setResultsReviews] = useState([]);
-    const [resultsRecommendations, setResultsRecommendations] = useState([]);
-    const [isFav, setIsFav] = useState(false);
+    const [manga, setManga] = useState([]);
+    const [isFavorite, setIsFavorite] = useState(false); 
+    const [progress, setProgress] = useState(null);
+    const [choice, setChoice] = useState('Overview');
  
     const { id_manga } = useParams();
 
-    // eslint-disable-next-line
-    let Paginate, Pag, currentPage;
-    const MangaReviews = { Paginate, Pag, currentPage } = usePaginate(1, resultsReviews);
-    const MangaRecommendations = { Paginate, Pag, currentPage } = usePaginate(userData.postsPerPageDetails, resultsRecommendations);
-    
     const handleAnchor = () => {
-        setUpdate(!update);     //atualizar componente quando o user seleciona uma recomendação
+        setChoice('Overview');    
+        setLoading(true);
     }
 
-    window.onpopstate = function() {
-        if(window.location.pathname.includes("manga"))
-            setUpdate(!update);     //atualizar componente quando o user volta à página anterior
+    const handleChoice = (option) => {
+        setChoice(option);
     }
 
-    const handleAddFavorito = async() => {
+    const handleSelectedOption = async(selectedOption) => {
+        if(selectedOption) handleAddFavorite(false);
+
         try {
             const body = { 
-                email: userData.email, 
-                id_manga: resultsManga.mal_id, 
-                type_manga: resultsManga.type ? resultsManga.type : "N/A", 
-                nome: resultsManga.title, 
-                image: resultsManga.image_url, 
-                chapters: resultsManga.chapters ? resultsManga.chapters : "N/A", 
-                volumes: resultsManga.volumes ? resultsManga.volumes : "N/A", 
-                status: resultsManga.status ? resultsManga.status : "N/A", 
-                score: resultsManga.score ? resultsManga.score : "N/A", 
-                url: resultsManga.url, 
-                synopsis: resultsManga.synopsis ? resultsManga.synopsis : "N/A"
+                progress: selectedOption,
+                email: user.email,
+                id: id_manga,
+                type: 'manga'
             };
 
-            const response = await fetch(`${APIUrl}/favoritos/manga`,
+            const response = await fetch(`${APIUrl}/favoritos/progress`,
                 {
-                    method: "POST",
+                    method: 'PUT',
                     headers: {
-                        "Content-type": "application/json"
+                        'Content-type': 'application/json'
                     },
                     body: JSON.stringify(body)
                 }
@@ -68,182 +62,178 @@ function UserManga({userData}) {
     
             const parseRes = await response.json();
     
-            if (parseRes === "OK") {
-                toast.success(resultsManga.title + " added to your list!", { position: "bottom-right" });
+            if (parseRes === 'OK') {
+                toast.info(`Manga set as ${selectedOption} sucessfully!`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(parseRes, { position: "bottom-right" });
+                toast.error(parseRes, { position: 'bottom-right' });
             }
-        } catch (err) {
-            console.error(err.message);
+        } catch (error) {
+            console.error(error);
         }
     }
 
-    const handleRemoveFavorito = async() => {
+    const handleAddFavorite = async(updateNow) => {
+        if(isFavorite) return;
+        
         try {
-            const response = await fetch(`${APIUrl}/favoritos/${userData.email}/${id_manga}/manga`,
+            const body = { 
+                email: user.email, 
+                id_manga: manga.mal_id, 
+                type_manga: manga.type ? manga.type : 'N/A', 
+                name: manga.title, 
+                image: manga.image_url, 
+                chapters: manga.chapters ? manga.chapters : 'N/A', 
+                volumes: manga.volumes ? manga.volumes : 'N/A', 
+                status: manga.status ? manga.status : 'N/A', 
+                score: manga.score ? manga.score : 'N/A', 
+                url: manga.url, 
+                synopsis: manga.synopsis ? manga.synopsis : 'N/A'
+            };
+
+            const response = await fetch(`${APIUrl}/favoritos/manga`,
                 {
-                    method: "DELETE",
+                    method: 'POST',
                     headers: {
-                        "Content-type": "application/json"
+                        'Content-type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                }
+            );
+    
+            const parseRes = await response.json();
+    
+            if (parseRes === 'OK') {
+                toast.info(`${manga.title} added to your list!`, { position: 'bottom-right' });
+                updateNow && setUpdate(!update);
+            } else {
+                toast.error(parseRes, { position: 'bottom-right' });
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    const handleRemoveFavorite = async() => {
+        try {
+            const response = await fetch(`${APIUrl}/favoritos/${user.email}/${id_manga}/manga`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-type': 'application/json'
                     }
                 }
             );
     
             const parseRes = await response.json();
     
-            if (parseRes === "OK") {
-                toast.success(resultsManga.title + " removed from your list!", { position: "bottom-right" });
+            if (parseRes === 'OK') {
+                toast.info(`${manga.title} removed from your list!`, { position: 'bottom-right' });
                 setUpdate(!update);
             } 
-        } catch (err) {
-            console.error(err.message);
+        } catch (error) {
+            console.error(error);
         }
     }
 
-    async function checkIfFav() {
-        const res = await fetch(`${APIUrl}/favoritos/${userData.email}/${id_manga}/manga`);
+    const checkIfFavorite = async() => {
+        if(guest) return;
+
+        const res = await fetch(`${APIUrl}/favoritos/${user.email}/${id_manga}/manga`);
         const parseRes = await res.json();
-        if(parseRes) setIsFav(true);
+        if(parseRes) setIsFavorite(true);
+        else setIsFavorite(false);
+
+        const resMangaFavorites = await fetch(`${APIUrl}/favoritos/${user.email}/manga`);
+        const MangaFavoritesArray = await resMangaFavorites.json();
+        const filteredMangaFavoritesArray = [...MangaFavoritesArray].filter(manga => manga.id_manga === parseInt(id_manga));
+        setProgress(filteredMangaFavoritesArray.length > 0 ? filteredMangaFavoritesArray[0].progress : 'Add to list');
     }
 
-    async function getManga() {
+    const getManga = async() => {
         const res = await fetch(`https://api.jikan.moe/v3/manga/${id_manga}`);
+        if(!res.ok) return history.push('/404');
         const MangaArray = await res.json();
-        setResultsManga(MangaArray);
-    }
+        setManga(MangaArray);
 
-    async function getReviews() {
-        const res = await fetch(`https://api.jikan.moe/v3/manga/${id_manga}/reviews`);
-        const ReviewsArray = await res.json();
-        setResultsReviews(ReviewsArray.reviews);
-    }
-
-    async function getRecommendations() {
-        const res = await fetch(`https://api.jikan.moe/v3/manga/${id_manga}/recommendations`);
-        const RecommendationsArray = await res.json();
-        setResultsRecommendations(RecommendationsArray.recommendations);
+        document.title = `${MangaArray.title} • AniDash`;
     }
 
     useEffect(() => {
-        window.scrollTo(0, 0);
-        checkIfFav();
-        getManga();
-        getReviews();
-        setTimeout(() => {
-            getRecommendations();  
-            setLoading(false); 
-        }, 1000);
-        setIsFav(false);
+        checkIfFavorite();
 
         // eslint-disable-next-line
     }, [update])
 
-    if(resultsManga.length === 0) return <Spinner />
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        checkIfFavorite();
+        getManga();
+        const loadingTime = setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+
+        return () => {
+            handleAnchor();
+            clearTimeout(loadingTime);
+        }
+
+        // eslint-disable-next-line
+    }, [id_manga])
+
+    if(loading) return (
+        <>
+            <SpacingElement unwrapped />
+            <Spinner />
+        </>
+    )
 
     return (
-        <ContentInfoWrapper>
-            <TituloWrapper>
-                <Space />
-                {isFav 
-                    ? 
-                    <Titulo>{resultsManga.title} <i onClick={handleRemoveFavorito} className='fas fa-heart'></i></Titulo> 
-                    : 
-                    <Titulo>{resultsManga.title} <i onClick={handleAddFavorito} className='far fa-heart'></i></Titulo>
+        <ContentWrapper>
+            <SpacingElement unwrapped />
+            <GenericContentInformation 
+                guest={guest}
+                type='manga'
+                title={manga.title}
+                option={progress}
+                progress1='Completed'
+                progress2='Reading'
+                progress3='Planning'
+                progress4='Dropped'
+                array={manga}
+                isFavorite={isFavorite}
+                handleAddFavorite={handleAddFavorite}
+                handleRemoveFavorite={handleRemoveFavorite}
+                handleSelectedOption={handleSelectedOption}
+            />
+            <br/>
+            <ContentInfoBar>
+                <div className={choice === 'Overview' ? 'active' : ''} onClick={() => handleChoice('Overview')}>Overview</div>
+                {!guest && isFavorite && 
+                    <div className={choice === 'Tracking' ? 'active' : ''} onClick={() => handleChoice('Tracking')}>Tracking</div>
                 }
-                <Space />
-            </TituloWrapper>
-            <ContentInfo top>
-                <img src={resultsManga.image_url.replace(".jpg", "l.jpg")} alt="Manga Cover" />
-                <ReadMoreReadLess text={resultsManga.synopsis} />
-            </ContentInfo>
-            <SubTitulo style={{textAlign: "center", marginTop: "5%"}}>Overview</SubTitulo>
-            <ContentInfo middle manga>
-                <div>
-                    {resultsManga.rank && (<p><b>Rank</b><br/>{resultsManga.rank}</p>)}
-                    {resultsManga.status && (<p><b>Status</b><br/>{resultsManga.status}</p>)}
-                    {resultsManga.type && (<p><b>Format</b><br/>{resultsManga.type}</p>)}
-                    {resultsManga.episodes && (<p><b>Volumes</b><br/>{resultsManga.volumes}</p>)}
-                    {resultsManga.duration && (<p><b>Chapters</b><br/>{resultsManga.chapters}</p>)}
-                    {resultsManga.score && (<p><b>Score</b><br/>{resultsManga.score}</p>)}
-                </div>
-            </ContentInfo>
-            {resultsReviews.length > 0 ? 
-                <Pagination 
-                    style={{marginTop: "5%"}} 
-                    Title={`Reviews - ${resultsReviews.length} in total`} 
-                    postsPerPage={1} totalPosts={resultsReviews.length} 
-                    paginate={MangaReviews.Paginate} 
-                    currentPage={MangaReviews.currentPage}
-                /> 
-                : 
-                <SubTitulo style={{textAlign: "center", marginTop: "5%"}}>Reviews</SubTitulo> 
+                <div className={choice === 'Stats' ? 'active' : ''} onClick={() => handleChoice('Stats')}>Stats</div>
+                <div className={choice === 'Characters' ? 'active' : ''} onClick={() => handleChoice('Characters')}>Characters</div>
+                <div className={choice === 'Recommendations' ? 'active' : ''} onClick={() => handleChoice('Recommendations')}>Recommendations</div>
+            </ContentInfoBar>
+            <br/>
+            {choice === 'Overview' &&
+                <GenericContentOverview array={manga} />
             }
-            <ContentInfo single>
-                {resultsReviews.length > 0 ? 
-                    MangaReviews.Pag.map(review => (
-                        <Fragment key={review.mal_id}>
-                            <TextWrapper>
-                                Posted by
-                                <a href={review.reviewer.url} target="_blank" rel="noopener noreferrer"> {review.reviewer.username} </a>
-                                on {moment(review.date.slice(0,10)).format("DD-MM-YYYY")}
-                                , read {review.reviewer.chapters_read} chapters
-                            </TextWrapper>
-                            <TextWrapper scores>
-                                <p><b>Overall:</b> {review.reviewer.scores.overall}</p>
-                                <p><b>Story:</b> {review.reviewer.scores.story}</p>
-                                <p><b>Art:</b> {review.reviewer.scores.art}</p>
-                                <p><b>Characters:</b> {review.reviewer.scores.character}</p>
-                                <p><b>Enjoyment:</b> {review.reviewer.scores.enjoyment}</p>
-                            </TextWrapper>
-                            <ReadMoreReadLess text={review.content.replace(/\\\n\r\n\\n\r\n/g, "\n").replace(/\\n/g, "")} />
-                        </Fragment>
-                    ))
-                    :
-                    <div style={{width: "77vw", textAlign: "center", padding: "1rem"}}>No reviews available for {resultsManga.title}</div>
-                }
-            </ContentInfo>
-            {resultsRecommendations.length > 0 ? 
-                <Pagination 
-                    style={{marginTop: "5%"}} 
-                    Title={`Recommendations - ${resultsRecommendations.length} manga`} 
-                    postsPerPage={userData.postsPerPageDetails} 
-                    totalPosts={resultsRecommendations.length} 
-                    paginate={MangaRecommendations.Paginate} 
-                    currentPage={MangaRecommendations.currentPage}
-                /> 
-                : 
-                <SubTitulo style={{textAlign: "center", marginTop: "5%"}}>Recommendations</SubTitulo> 
-            }        
-            <ContentInfo bottom last>
-                {loading ?
-                    <div style={{width: "77vw", textAlign: "center"}}><Spinner /></div>
-                    :
-                    resultsRecommendations.length > 0 ? 
-                        MangaRecommendations.Pag.map((manga, index) => (
-                            <div className="item" key={index}>
-                                <OverlayTrigger
-                                    key={index}
-                                    placement="auto"
-                                    overlay={
-                                        <Tooltip className="AnimeDetails">
-                                            <h3><b>{manga.title}</b></h3>
-                                        </Tooltip>
-                                    }
-                                >
-                                    <div variant="secondary">
-                                        <Link onClick={handleAnchor} to={`/manga/${manga.mal_id}`}><img src={manga.image_url.replace(".jpg", "l.jpg")} alt="Manga Cover" /></Link>
-                                    </div>
-                                </OverlayTrigger>
-                    
-                            </div>
-                        )) 
-                        : 
-                        <div style={{width: "77vw", textAlign: "center"}}>No recommendations available for {resultsManga.title}</div> 
-                }
-            </ContentInfo>
-        </ContentInfoWrapper>
+            {choice === 'Tracking' &&
+                <MangaTracking id_manga={id_manga} user={user} total={manga.chapters} />
+            }
+            {choice === 'Stats' &&
+                <MangaStats id_manga={id_manga} />
+            }
+            {choice === 'Characters' &&
+                <MangaCharacters id_manga={id_manga} />
+            }
+            {choice === 'Recommendations' &&
+                <MangaRecommendations id_manga={id_manga} />
+            }
+        </ContentWrapper>
     );
 }
 
-export default UserManga;
+export default MangaInfo;

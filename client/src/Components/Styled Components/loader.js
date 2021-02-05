@@ -8,7 +8,6 @@ const Spinner = styled.div`
     border-radius: 100%;  
     -webkit-animation: sk-scaleout 1.0s infinite ease-in-out;
     animation: sk-scaleout 1.0s infinite ease-in-out;
-
     @-webkit-keyframes sk-scaleout {
         0% { -webkit-transform: scale(0) }
         100% {
@@ -16,7 +15,6 @@ const Spinner = styled.div`
           opacity: 0;
         }
     }
-      
     @keyframes sk-scaleout {
         0% { 
           -webkit-transform: scale(0);

@@ -1,153 +1,64 @@
-import React, { Fragment, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { Fragment, useContext, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { ProfilePicture, ProfilePageWrapper, InfoWrapper } from '../Styled Components/profile';
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { ContentInfoWrapper, ContentInfo, TituloWrapper, BasicWrapper } from '../Styled Components/content';
-import { Titulo } from '../Styled Components/text';
-import { Space } from '../Styled Components/navbar';
+import { SpacingElement } from '../Styled Components/navbar';
+import UserContext from '../../Context/UserContext';
+import GenericProfileOverview from '../GenericComponents/GenericProfileOverview';
+import ProfileLists from './ProfileLists';
+import { ContentInfoBar } from '../Styled Components/content';
+import { useHistory, useParams } from 'react-router-dom';
 import { Spinner } from '../Styled Components/loader';
-import { InputWrapper } from '../Styled Components/form';
-import Pagination from '../Geral/Pagination';
-import { Btn } from '../Styled Components/btn';
-import usePaginate from '../Utils/usePaginate';
+import { ProfileDetailedStats } from '../Styled Components/profile';
+import { Titulo } from '../Styled Components/text';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-function UserProfile({ userData, setUser }) {
+function UserProfile() {
+    const user = useContext(UserContext);
+    const history = useHistory();
+
     const [loading, setLoading] = useState(true);
     const [update, setUpdate] = useState(false);
-    const [edit, setEdit] = useState(false);
-    const [anime, setAnime] = useState([]);
-    const [manga, setManga] = useState([]);
-    const [follow, setFollow] = useState({
-        countFollowers: 0,
-        countFollowing: 0,
-        userFollowers: [],
-        userFollowing: []
+    const [isFollow, setIsFollow] = useState(false);
+    const [profile, setProfile] = useState([]);
+    const [stats, setStats] = useState({
+        animeCount: 0,
+        mangaCount: 0,
+        followersCount: 0,
+        followingCount: 0,
+        timeSpent: 0,
+        episodesCount: 0,
+        chaptersCount: 0
     });
-    const [newPostsPerPage, setNewPostsPerPage] = useState({
-        home: userData.postsPerPageHome,
-        animemanga: userData.postsPerPageAnimeManga,
-        details: userData.postsPerPageDetails,
-        profile: userData.postsPerPageProfile
-    })
+    const [choice, setChoice] = useState('Stats');
 
-    // eslint-disable-next-line
-    let Paginate, Pag, currentPage;
-    const Anime = { Paginate, Pag, currentPage } = usePaginate(userData.postsPerPageProfile, anime);
-    const Manga = { Paginate, Pag, currentPage } = usePaginate(userData.postsPerPageProfile, manga);
-    const Followers = { Paginate, Pag, currentPage } = usePaginate(userData.postsPerPageProfile, follow.userFollowers);
-    const Following = { Paginate, Pag, currentPage } = usePaginate(userData.postsPerPageProfile, follow.userFollowing);
+    const { username } = useParams();
 
-    //Atualizar conteudo
+    document.title = `${username}'s Profile`;
+
+    const handleChoice = (option) => {
+        setChoice(option);
+    }
+
     const handleAnchor = () => {
-        setUpdate(!update);
+        setChoice('Stats');
         setLoading(true);
     }
 
-    //Editar perfil
-    const handleEdit = () => {
-        setEdit(!edit);
-    }
-
-    const handleOnChangePosts = (e, type) => {
-        setNewPostsPerPage({
-            home: type === 1 ? e.target.value : newPostsPerPage.home,
-            animemanga: type === 2 ? e.target.value : newPostsPerPage.animemanga,
-            details: type === 3 ? e.target.value : newPostsPerPage.details,
-            profile: type === 4 ? e.target.value : newPostsPerPage.profile
-        })
-    }
-
-    //Requests
-    async function getFollows() {
-        const res = await fetch(`${APIUrl}/follow/${userData.username}`);
-        const FollowsArray = await res.json();
-        setFollow({
-            countFollowers: FollowsArray.contagem_followers.followers,
-            countFollowing: FollowsArray.contagem_following.followers,
-            userFollowers: FollowsArray.info_followers,
-            userFollowing: FollowsArray.info_following
-        })
-    }
-
-    async function getAnime() {
-        const res = await fetch(`${APIUrl}/favoritos/${userData.email}/anime`);
-        const AnimeArray = await res.json();
-        setAnime(AnimeArray);
-    }
-
-    async function getManga() {
-        const res = await fetch(`${APIUrl}/favoritos/${userData.email}/manga`);
-        const MangaArray = await res.json();
-        setManga(MangaArray);
-    }
-
-    useEffect(() => {
-        getFollows();
-        getAnime();
-        getManga();
-        setLoading(false);
-        
-        // eslint-disable-next-line
-    }, [update]);
-
-    //Upload avatar
-    const updateAvatar = (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onloadend = async() => {
-            try {
-                const body = { 
-                    email: userData.email,
-                    avatar: reader.result
-                };
-    
-                const response = await fetch(`${APIUrl}/users`,
-                    {
-                        method: "PUT",
-                        headers: {
-                            "Content-type": "application/json"
-                        },
-                        body: JSON.stringify(body)
-                    }
-                );
-        
-                const parseRes = await response.json();
-        
-                if (parseRes === "OK") {
-                    toast.success("Avatar updated sucessfully!", { position: "bottom-right" });
-                    setUser(userData.username, userData.email, reader.result, userData.postsPerPage);
-                    setUpdate(!update);
-                } else {
-                    toast.error(parseRes, { position: "bottom-right" });
-                }
-            } catch (err) {
-                console.error(err.message);
-            }
-        }
-    }
-
-    const updatePosts = async() => {
+    const handleAddFollow = async() => {
         try {
             const body = { 
-                postsPerPageHome: newPostsPerPage.home,
-                postsPerPageAnimeManga: newPostsPerPage.animemanga,
-                postsPerPageDetails: newPostsPerPage.details,
-                postsPerPageProfile: newPostsPerPage.profile,
-                username: userData.username
+                id_user: profile._id, 
+                followerEmail: user.email, 
             };
 
-            const response = await fetch(`${APIUrl}/users/postsperpage`,
+            const response = await fetch(`${APIUrl}/follow`,
                 {
-                    method: "PUT",
+                    method: 'POST',
                     headers: {
-                        "Content-type": "application/json"
+                        'Content-type': 'application/json'
                     },
                     body: JSON.stringify(body)
                 }
@@ -155,244 +66,206 @@ function UserProfile({ userData, setUser }) {
     
             const parseRes = await response.json();
     
-            if (parseRes === "OK") {
-                toast.success("Pagination values updated successfully!", { position: "bottom-right" });
-                setUser(
-                    userData.username, 
-                    userData.email, 
-                    userData.avatar,  
-                    newPostsPerPage.home,
-                    newPostsPerPage.animemanga,
-                    newPostsPerPage.details,
-                    newPostsPerPage.profile,
-                );
+            if (parseRes === 'OK') {
+                toast.success(`You're now following ${profile.username}`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(parseRes, { position: "bottom-right" });
+                toast.error(parseRes, { position: 'bottom-right' });
             }
-        } catch (err) {
-            console.error(err.message);
+        } catch (error) {
+            console.error(error);
         }
     }
 
+    const handleRemoveFollow = async() => {
+        try {
+            const body = { 
+                id_user: profile._id, 
+                followerEmail: user.email,  
+            };
+
+            const response = await fetch(`${APIUrl}/follow`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                }
+            );
+    
+            const parseRes = await response.json();
+    
+            if (parseRes === 'OK') {
+                toast.success(`You stopped following ${profile.username}`, { position: 'bottom-right' });
+                setUpdate(!update);
+            } else {
+                toast.error(parseRes, { position: 'bottom-right' });
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    const checkIfFollow = async() => {
+        const res = await fetch(`${APIUrl}/follow/${username}/${user.email}`);
+        const parseRes = await res.json();
+        if(parseRes) setIsFollow(true);
+        else setIsFollow(false);
+    }
+
+    const getProfile = async() => {
+        const res = await fetch(`${APIUrl}/users/${username}`);
+        if(!res.ok) return history.push('/404');
+        const ProfileArray = await res.json();
+        setProfile(ProfileArray);
+    }
+
+    const getStats = async() => {
+        const res = await fetch(`${APIUrl}/users/stats/${username}`);
+        const StatsArray = await res.json();
+
+        setStats({
+            animeCount: StatsArray.anime,
+            mangaCount: StatsArray.manga,
+            followersCount: StatsArray.followers,
+            followingCount: StatsArray.following,
+            timeSpent: StatsArray.timeSpent,
+            episodesCount: StatsArray.episodes,
+            chaptersCount: StatsArray.chapters
+        });
+    }
+
+    useEffect(() => {
+        checkIfFollow();
+        getStats();
+
+        // eslint-disable-next-line
+    }, [update])
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        checkIfFollow();
+        getProfile();
+        getStats();
+        const loadingTime = setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+
+        return () => {
+            handleAnchor()
+            clearTimeout(loadingTime);
+        }
+        
+        // eslint-disable-next-line
+    }, [username]);
+
+    if(loading) return (
+        <>
+            <SpacingElement unwrapped />
+            <Spinner />
+        </>
+    )       
+
     return (
         <Fragment>
-            <TituloWrapper>
-                <Space />
-                {!edit && <Titulo>Your Profile <i onClick={handleEdit} className="far fa-edit"></i></Titulo>}
-                <Space />
-            </TituloWrapper>
-            {edit &&
-               <BasicWrapper>
-                    <Titulo>Update your avatar</Titulo>
-                    <InputWrapper>
-                        <input type="file" id="file" name="avatar" placeholder="Choose a new avatar" onChange={updateAvatar} />  
-                        <label htmlFor="file">Choose a new avatar</label>
-                    </InputWrapper>
-                    <Titulo>Update your pagination settings</Titulo>
-                    <InputWrapper>
-                        <input type="number" id="numberPagesHome" min="5" max="30" value={newPostsPerPage.home} placeholder="Items on Home's pagination" onChange={e => handleOnChangePosts(e, 1)} />  
-                        <label htmlFor="numberPagesHome">Items on Home's pagination</label>
-                    </InputWrapper>
-                    <InputWrapper>
-                        <input type="number" id="numberPagesAnime" min="5" max="30" value={newPostsPerPage.animemanga} placeholder="Items on Anime and Manga's pagination" onChange={e => handleOnChangePosts(e, 2)} />  
-                        <label htmlFor="numberPagesAnime">Items on Anime and Manga's pagination</label>
-                    </InputWrapper>
-                    <InputWrapper>
-                        <input type="number" id="numberPagesManga" min="5" max="30" value={newPostsPerPage.details} placeholder="Items on Content Details's pagination" onChange={e => handleOnChangePosts(e, 3)} />  
-                        <label htmlFor="numberPagesManga">Items on Content Details's pagination</label>
-                    </InputWrapper>
-                    <InputWrapper>
-                        <input type="number" id="numberPagesProfile" min="5" max="30" value={newPostsPerPage.profile} placeholder="Items on Profile's pagination" onChange={e => handleOnChangePosts(e, 4)} />  
-                        <label htmlFor="numberPagesProfile">Items on Profile's pagination</label>
-                    </InputWrapper>
-                    <Btn onClick={updatePosts} primary>Update values</Btn>
-                    <Btn style={{marginTop: "10%", marginBottom: "10%"}} onClick={handleEdit} secondary>Back to my profile</Btn>
-                </BasicWrapper>
-            }
-            {loading ?
-                <Spinner />
-                :
-                !edit &&
-                    <ProfilePageWrapper>
-                        {userData.avatar ? 
-                            <ProfilePicture src={userData.avatar} alt="User Avatar" self />
-                            :
-                            <ProfilePicture src="/imagens/placeholder.png" alt="User Avatar" self />
-                        }
-                        <InfoWrapper>
-                            <Space />
-                            <p><b>Username</b><br/>{userData.username}</p>
-                            <Space />
-                            <p><b>Anime</b><br/>{anime.length}</p>
-                            <Space />
-                            <p><b>Manga</b><br/>{manga.length}</p>
-                            <Space />
-                            <p><b>Followers</b><br/>{follow.countFollowers}</p>
-                            <Space />
-                            <p><b>Following</b><br/>{follow.countFollowing}</p>
-                            <Space />
-                        </InfoWrapper>
-                    </ProfilePageWrapper>
-            }
-            {!edit && 
-                <Pagination 
-                    style={{width: "80%", margin: "0 auto"}} 
-                    MainTitle={"Your Anime"} 
-                    postsPerPage={userData.postsPerPageProfile} 
-                    totalPosts={anime.length} 
-                    paginate={Anime.Paginate} 
-                    currentPage={Anime.currentPage}
-                /> 
-            }
-            {loading ?
-                <Spinner />
-                :
-                !edit &&
-                    <ContentInfoWrapper>
-                        <ContentInfo bottom>
-                            {anime.length > 0 ? 
-                                Anime.Pag.map((anime, index) => (
-                                    <div className="item" key={index}>
-                                        <OverlayTrigger
-                                            key={index}
-                                            placement="auto"
-                                            overlay={
-                                                <Tooltip className="AnimeDetails">
-                                                    <h3><b>{anime.nome}</b></h3>
-                                                </Tooltip>
-                                            }
-                                        >
-                                            <div variant="secondary">
-                                                <Link to={`/anime/${anime.id_anime}`}><img src={anime.image} alt="Anime Cover"/></Link>
-                                            </div>
-                                        </OverlayTrigger>
-                            
-                                    </div>
-                                )) 
-                                : 
-                                <div style={{width: "77vw", textAlign: "center"}}>You don't have any Anime yet!</div>
-                            }
-                        </ContentInfo>
-                    </ContentInfoWrapper>
-            }
-            {   !edit && <Pagination style={{width: "80%", margin: "0 auto"}} MainTitle={"Your Manga"} postsPerPage={userData.postsPerPageProfile} totalPosts={manga.length} paginate={Manga.Paginate} currentPage={Manga.currentPage}/> }
-            {   loading ?
-                <Spinner />
-                :
-                !edit &&
-                <ContentInfoWrapper>
-                    <ContentInfo bottom>
-                        {manga.length > 0 ? Manga.Pag.map((manga, index) => (
-                            <div className="item" key={index}>
-                                <OverlayTrigger
-                                    key={index}
-                                    placement="auto"
-                                    overlay={
-                                        <Tooltip className="AnimeDetails">
-                                            <h3><b>{manga.nome}</b></h3>
-                                        </Tooltip>
-                                    }
-                                    >
-                                    <div variant="secondary">
-                                        <Link to={`/manga/${manga.id_manga}`}><img src={manga.image} alt="Anime Cover"/></Link>
-                                    </div>
-                                </OverlayTrigger>
-                    
+            <SpacingElement unwrapped />
+            <GenericProfileOverview
+                title={`${username}'s Profile`}
+                followState={
+                    username !== user.username ? 
+                        isFollow ? 
+                            <i onClick={() => handleAddFollow()} className='far fa-heart'></i> 
+                            : 
+                            <i onClick={() => handleRemoveFollow()} className='fas fa-heart'></i> 
+                        : 
+                        ''
+                    }
+                user={profile}
+                array={stats}
+            />
+            <br/>
+            <ContentInfoBar style={{width: '80%', margin: '0 auto', color: '#fff'}}>
+                <div className={choice === 'Stats' ? 'active' : ''} onClick={() => handleChoice('Stats')}>Stats</div>
+                <div className={choice === 'Anime List' ? 'active' : ''} onClick={() => handleChoice('Anime List')}>Anime List</div>
+                <div className={choice === 'Manga List' ? 'active' : ''} onClick={() => handleChoice('Manga List')}>Manga List</div>
+                <div className={choice === 'Followers' ? 'active' : ''} onClick={() => handleChoice('Followers')}>Followers</div>
+                <div className={choice === 'Following' ? 'active' : ''} onClick={() => handleChoice('Following')}>Following</div>
+            </ContentInfoBar>
+            <br/>
+            {choice === 'Stats' && 
+                <ProfileDetailedStats>
+                    <div>
+                        <Titulo>Anime</Titulo>
+                        <hr />
+                        <div className='statsWrapper'>
+                            <div>
+                                <b>Total Anime</b>
+                                <p>{stats.animeCount}</p>
                             </div>
-                        )) : <div style={{width: "77vw", textAlign: "center"}}>You don't have any Manga yet!</div>}
-                    </ContentInfo>
-                </ContentInfoWrapper>
+                            <div>
+                                <b>Episodes Watched</b>
+                                <p>{stats.episodesCount ? stats.episodesCount : 0 }</p>
+                            </div>
+                            <div>
+                                <b>Hours Watched</b>
+                                <p>{Math.round(stats.timeSpent / 60)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <Titulo>Manga</Titulo>
+                        <hr />
+                        <div className='statsWrapper'>
+                            <div>
+                                <b>Total Manga</b>
+                                <p>{stats.mangaCount}</p>
+                            </div>
+                            <div>
+                                <b>Chapters Read</b>
+                                <p>{stats.chaptersCount ? stats.chaptersCount : 0}</p>
+                            </div>
+                        </div>
+                    </div>
+                </ProfileDetailedStats>
             }
-            {!edit && 
-                <Pagination 
-                    style={{width: "80%", margin: "0 auto"}} 
-                    MainTitle={`Your Followers`} 
-                    postsPerPage={userData.postsPerPageProfile} 
-                    totalPosts={follow.userFollowers.length} 
-                    paginate={Followers.Paginate} 
-                    currentPage={Followers.currentPage}
-                /> 
+            {choice === 'Anime List' &&
+                <ProfileLists 
+                    user={profile}
+                    type='anime'
+                    item1='Type'
+                    item2='Episodes'
+                    item3='Score'
+                    emptyMessage='No anime was found.'
+                />
             }
-            {loading ?
-                <Spinner />
-                :
-                !edit &&
-                    <ContentInfoWrapper>
-                        <ContentInfo bottom users>
-                            {follow.userFollowers.length > 0 ? 
-                                Followers.Pag.map((user, index) => (
-                                    <div className="item" key={index}>
-                                        <OverlayTrigger
-                                            key={index}
-                                            placement="auto"
-                                            overlay={
-                                                <Tooltip className="AnimeDetails">
-                                                    <h3><b>{user.username}</b></h3>
-                                                </Tooltip>
-                                            }
-                                        >
-                                            <div variant="secondary">
-                                                {   user.avatar ? 
-                                                    <Link onClick={handleAnchor} to={`/profile/${user.username}`}><img style={{borderRadius: "50%"}} src={user.avatar} alt="User Avatar" /></Link>
-                                                    :
-                                                    <Link onClick={handleAnchor} to={`/profile/${user.username}`}><img style={{borderRadius: "50%"}} src="/imagens/placeholder.png" alt="User Avatar" /></Link>
-                                                }                                   
-                                            </div>
-                                        </OverlayTrigger>
-                            
-                                    </div>
-                                )) 
-                                : 
-                                <div style={{width: "77vw", textAlign: "center"}}>{userData.username} doesn't have any followers yet!</div>
-                            }
-                        </ContentInfo>
-                    </ContentInfoWrapper>
+            {choice === 'Manga List' &&
+                <ProfileLists 
+                    user={profile}
+                    type='manga'
+                    item1='Volumes'
+                    item2='Chapters'
+                    item3='Score'
+                    emptyMessage='No manga was found.'
+                />
             }
-            {!edit && 
-                <Pagination 
-                    style={{width: "80%", margin: "0 auto"}} 
-                    MainTitle={`Your Following`} 
-                    postsPerPage={userData.postsPerPageProfile} 
-                    totalPosts={follow.userFollowing.length} 
-                    paginate={Following.Paginate} 
-                    currentPage={Following.currentPage}
-                /> 
+            {choice === 'Followers' &&
+                <ProfileLists 
+                    user={profile}
+                    type='profile'
+                    typeStyles={{borderRadius: '50%', width: '140px', height: '140px'}}
+                    profile='followers'
+                    emptyMessage='No followers were found.'
+                />
             }
-            {loading ?
-                <Spinner />
-                :
-                !edit &&
-                    <ContentInfoWrapper>
-                        <ContentInfo bottom users last>
-                            {follow.userFollowing.length > 0 ? 
-                                Following.Pag.map((user, index) => (
-                                    <div className="item" key={index}>
-                                        <OverlayTrigger
-                                            key={index}
-                                            placement="auto"
-                                            overlay={
-                                                <Tooltip className="AnimeDetails">
-                                                    <h3><b>{user.username}</b></h3>
-                                                </Tooltip>
-                                            }
-                                        >
-                                            <div variant="secondary">
-                                                {   user.avatar ? 
-                                                    <Link onClick={handleAnchor} to={`/profile/${user.username}`}><img style={{borderRadius: "50%"}} src={user.avatar} alt="User Avatar" /></Link>
-                                                    :
-                                                    <Link onClick={handleAnchor} to={`/profile/${user.username}`}><img style={{borderRadius: "50%"}} src="/imagens/placeholder.png" alt="User Avatar" /></Link>
-                                                }                                   
-                                            </div>
-                                        </OverlayTrigger>
-                            
-                                    </div>
-                                )) 
-                                : 
-                                <div style={{width: "77vw", textAlign: "center"}}>{userData.username} isn't following anyone yet!</div>
-                            }
-                        </ContentInfo>
-                    </ContentInfoWrapper>
+            {choice === 'Following' &&
+                <ProfileLists 
+                    user={profile}
+                    type='profile'
+                    typeStyles={{borderRadius: '50%', width: '140px', height: '140px'}}
+                    profile='following'
+                    emptyMessage='No following was found.'
+                />
             }
         </Fragment>
     );

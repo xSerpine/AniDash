@@ -1,491 +1,385 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import {  BrowserRouter as Router, Switch, Route, Redirect } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom';
 import './App.css';
 import LoginUser from './Components/Login/Login';
 import RegisterUser from './Components/Sign Up/Register';
-import HomeUser from './Components/Geral/Home';
+import HomeUser from './Components/Home/Home';
 import NavBar from './Components/NavBar/Navbar';
 import SideBar from './Components/NavBar/Sidebar';
 import BackDrop from './Components/NavBar/Backdrop';
-import UserAnime from './Components/Anime/Anime';
-import Animelistings from './Components/Anime/AnimeListings';
+import AnimeInfo from './Components/Anime/Anime';
+import Animelistings from './Components/AnimeListings/AnimeListings';
 import BrowseAniDash from './Components/Browse/Browse';
-import UserManga from './Components/Manga/Manga';
-import Mangalistings from './Components/Manga/MangaListings';
+import MangaInfo from './Components/Manga/Manga';
+import Mangalistings from './Components/MangaListings/MangaListings';
 import UserProfile from './Components/Profile/Profile';
-import ProfileOfGivenUsername from './Components/Profile/ProfileOfGivenUsername';
-import UserActivity from './Components/Geral/Activity';
+import UserActivity from './Components/Activity/Activity';
 import { Footer } from './Components/Styled Components/text';
+import { SpacingElement } from './Components/Styled Components/navbar';
+import UserContext from './Context/UserContext';
+import PageNotFound from './Components/Errors/PageNotFound';
+import ConfirmationPage from './Components/Sign Up/ConfirmationPage';
+import RecoverMethod from './Components/Login/RecoverMethod';
+import RecoverPassword from './Components/Login/RecoverPassword';
 
-const APIUrl = process.env.REACT_APP_API_URL;
+const APIUrl = 'https://anidash-api.herokuapp.com';
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userData, setUserData] = useState({
-    username: "",
-    email: "",
-    avatar: "",
-    postsPerPageHome: "",
-    postsPerPageAnimeManga: "",
-    postsPerPageDetails: "",
-    postsPerPageProfile: ""
-  });
+const App = () => {
+	const data = localStorage.getItem('user');
+	const token = localStorage.getItem('jwtToken')
 
-  const checkAuthenticated = async () => {
-    try {
-      const res = await fetch(APIUrl + "/autenticar/verificar", {
-        headers: { "jwtToken": localStorage.jwtToken }
-      })
+	const [isAuthenticated, setIsAuthenticated] = useState(token ? true : false);
+	const [user, setUser] = useState({
+		username: data ? JSON.parse(data).username : '',
+		email:  data ? JSON.parse(data).email : '',
+		avatar:  data ? JSON.parse(data).avatar : '',
+		SFW: data ? JSON.parse(data).sfw : ''
+	})
 
-      const parseRes = await res.json();
-      
-      parseRes === true ? setIsAuthenticated(true) : setIsAuthenticated(false);
+	const checkAuthenticated = async () => {
+		try {
+			const res = await fetch(`${APIUrl}/autenticar/verificar`, {
+				headers: { jwtToken: localStorage.getItem('jwtToken') },
+			});
 
-    } catch (err) {
-      console.error(err.message);
-    }
-  }
+			const parseRes = await res.json();
 
-  useEffect(() => {
-    const data = localStorage.getItem("user");
+			setIsAuthenticated(parseRes);
+		} catch (error) {
+			console.error(error);
+		}
+	};
 
-    if(data) {
-      try {
-        setUserData(JSON.parse(data));
-      } catch (error) {
-        console.log(error);
-      }
-    }
-  }, []);
+	useEffect(() => {		
+		checkAuthenticated();
 
-  useEffect(() => {
-    checkAuthenticated();
-    localStorage.setItem("user", JSON.stringify(userData));
-  });
+	}, []);
 
-  const setAuth = (boolean) => {
-    setIsAuthenticated(boolean);
-  }
+	const setAuth = (boolean) => {
+		setIsAuthenticated(boolean);
+	};
 
-  const setUser = (username_user, email_user, avatar_user, postshome_user, postsanime_user, postsmanga_user, postsprofile_user) => {
-    setUserData({
-      username: username_user,
-      email: email_user,
-      avatar: avatar_user,
-      postsPerPageHome: postshome_user,
-      postsPerPageAnimeManga: postsanime_user,
-      postsPerPageDetails: postsmanga_user,
-      postsPerPageProfile: postsprofile_user
-    });
-  }
+	const setUserData = (username, email, avatar, sfw) => {
+		setUser({
+			username: username,
+			email: email,
+			avatar: avatar,
+			SFW: sfw
+		})
+	}
 
-  return (
-    <Router>
-      <Switch>
-          <Route exact path="/" render={props => !isAuthenticated ? (<Login {...props} setUser={setUser} setAuth={setAuth} />) : (<Redirect to="/home"/> )}></Route>              
-          <Route path="/register" exact component={Register}></Route>              
-          <Route path="/home" render={props => isAuthenticated ? (<Home {...props} userData={userData} setAuth={setAuth} />) : (<Redirect to="/" />)}></Route>
-          <Route path="/search" render={props => isAuthenticated ? (<Browse {...props} userData={userData} setAuth={setAuth} />) : (<Redirect to="/" />)}></Route>
-          <Route exact path="/anime" render={props => isAuthenticated ? (<AnimeList {...props} userData={userData} setAuth={setAuth} />) : (<Redirect to="/" />)}></Route>
-          <Route exact path="/manga" render={props => isAuthenticated ? (<MangaList {...props} userData={userData} setAuth={setAuth} />) : (<Redirect to="/" />)}></Route>
-          <Route path="/anime/:id_anime" render={props => isAuthenticated ? (<Anime {...props} userData={userData} setAuth={setAuth} />) : (<Redirect to="/" />)}></Route>
-          <Route path="/manga/:id_manga" render={props => isAuthenticated ? (<Manga {...props} userData={userData} setAuth={setAuth} />) : (<Redirect to="/" />)}></Route>
-          <Route exact path="/profile" render={props => isAuthenticated ? (<Profile {...props} setUser={setUser} userData={userData} setAuth={setAuth} />) : (<Redirect to="/" />)}></Route>
-          <Route path="/profile/:username" render={props => isAuthenticated ? (<ProfileGivenUser {...props} userData={userData} setAuth={setAuth} />) : (<Redirect to="/" />)}></Route>
-          <Route path="/activity" render={props => isAuthenticated ? (<Activity {...props} userData={userData} setAuth={setAuth} />) : (<Redirect to="/" />)}></Route>
-       </Switch>
-    </Router>
-  )
+	const handleLogout = () => {
+		localStorage.clear();
+		setIsAuthenticated(false);
+	}
+
+	return (
+		<UserContext.Provider value={user}>
+			<Router>
+				<Switch>
+					<Route exact path='/' render={props => !isAuthenticated ? <Login {...props} setAuth={setAuth} setUserData={setUserData} /> : <Redirect to='/home'/> }></Route>              
+					<Route exact path='/register' component={Register}></Route>
+            
+					<Route exact path='/home' render={props => isAuthenticated ? <Home {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					<Route exact path='/search' render={props => isAuthenticated ? <Browse {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					<Route exact path='/anime' render={props => isAuthenticated ? <AnimeList {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					<Route exact path='/manga' render={props => isAuthenticated ? <MangaList {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					<Route exact path='/anime/:id_anime' render={props => isAuthenticated ? <Anime {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					<Route exact path='/manga/:id_manga' render={props => isAuthenticated ? <Manga {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					<Route exact path='/profile/:username' render={props => isAuthenticated ? <Profile {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					<Route exact path='/activity' render={props => isAuthenticated ? <Activity {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					<Route exact path='/settings' render={props => isAuthenticated ? <Settings {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					
+					<Route exact path='/guest' render={props => <Home {...props} guest={true} logout={handleLogout} />}></Route>
+					<Route exact path='/guest/search' render={props => <Browse {...props} guest={true} logout={handleLogout} />}></Route>
+					<Route exact path='/guest/anime' render={props => <AnimeList {...props} guest={true} logout={handleLogout} />}></Route>
+					<Route exact path='/guest/manga' render={props => <MangaList {...props} guest={true} logout={handleLogout} />}></Route>
+					<Route exact path='/guest/anime/:id_anime' render={props => <Anime {...props} guest={true} logout={handleLogout} />}></Route>
+					<Route exact path='/guest/manga/:id_manga' render={props => <Manga {...props} guest={true} logout={handleLogout} />}></Route>
+
+					<Route exact path='/forgot' component={Forgot}></Route>
+					<Route exact path='/forgot/:token' component={Recover}></Route>
+					<Route exact path='/confirm/:token' component={Confirm}></Route>
+					<Route component={Error} />
+				</Switch>
+			</Router>
+		</UserContext.Provider>
+	);
 }
 
 export default App;
 
-function Login({setAuth, setUser}) {  
-  return (
-    <LoginUser setUser={setUser} setAuth={setAuth} />
-  )
+const Error = () => {
+	return <PageNotFound />
 }
 
-function Register() {
-  return (
-    <RegisterUser />
-  )
+const Forgot = () => {
+	return <RecoverMethod />
 }
 
-function Home({setAuth, userData}) {
-  const [open, setOpen] = useState(false);
-
-  if(JSON.parse(localStorage.getItem("user")).username !== userData.username || JSON.parse(localStorage.getItem("user")).email !== userData.email) {
-    localStorage.removeItem("jwtToken");
-  }
-
-  const handleToggle = () => {
-    setOpen(!open);
-  }
-
-  const handleBackdrop = () => {
-    setOpen(false);
-  }
-
-  const logout = async e => {
-    e.preventDefault();
-    try {
-      localStorage.removeItem("jwtToken");
-      setAuth(false);
-    } catch (err) {
-      console.error(err.message);
-    }
-  }
-
-  let backdrop;
-
-  if(open) {
-    backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
-  }
-
-  return (
-    <Fragment>
-      <NavBar userData={userData} handleToggle={handleToggle} logout={logout}/>
-      <SideBar estado={open} logout={logout}/>
-      {backdrop}
-      <HomeUser userData={userData} />
-      <Footer>Made by <a target="_blank" rel="noopener noreferrer" href="https://github.com/xSerpine">Luís Ferro.</a></Footer>
-    </Fragment>
-  )
+const Recover = () => {
+	return <RecoverPassword />
 }
 
-function Browse({setAuth, userData}) {
-  const [open, setOpen] = useState(false);
-
-  if(JSON.parse(localStorage.getItem("user")).username !== userData.username || JSON.parse(localStorage.getItem("user")).email !== userData.email) {
-    localStorage.removeItem("jwtToken");
-  }
-
-  const handleToggle = () => {
-    setOpen(!open);
-  }
-
-  const handleBackdrop = () => {
-    setOpen(false);
-  }
-
-  const logout = async e => {
-    e.preventDefault();
-    try {
-      localStorage.removeItem("jwtToken");
-      setAuth(false);
-    } catch (err) {
-      console.error(err.message)
-    }
-  }
-
-  let backdrop;
-
-  if(open) {
-    backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
-  }
-
-  return (
-    <Fragment>
-      <NavBar userData={userData} handleToggle={handleToggle} logout={logout}/>
-      <SideBar estado={open} logout={logout}/>
-      {backdrop}
-      <BrowseAniDash />
-      <Footer>Made by <a target="_blank" rel="noopener noreferrer" href="https://github.com/xSerpine">Luís Ferro.</a></Footer>
-    </Fragment>
-  )
+const Confirm = () => {
+	return <ConfirmationPage />
 }
 
-function AnimeList({setAuth, userData}) {
-  const [open, setOpen] = useState(false);
-
-  if(JSON.parse(localStorage.getItem("user")).username !== userData.username || JSON.parse(localStorage.getItem("user")).email !== userData.email) {
-    localStorage.removeItem("jwtToken");
-  }
-
-  const handleToggle = () => {
-    setOpen(!open);
-  }
-
-  const handleBackdrop = () => {
-    setOpen(false);
-  }
-
-  const logout = async e => {
-    e.preventDefault();
-    try {
-      localStorage.removeItem("jwtToken");
-      setAuth(false);
-    } catch (err) {
-      console.error(err.message)
-    }
-  }
-
-  let backdrop;
-
-  if(open) {
-    backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
-  }
-
-  return (
-    <Fragment>
-      <NavBar userData={userData} handleToggle={handleToggle} logout={logout}/>
-      <SideBar estado={open} logout={logout}/>
-      {backdrop}
-      <Animelistings userData={userData} />
-      <Footer>Made by <a target="_blank" rel="noopener noreferrer" href="https://github.com/xSerpine">Luís Ferro.</a></Footer>
-    </Fragment>
-  )
+const Login = ({ setAuth, setUserData }) => {
+	return <LoginUser setAuth={setAuth} setUserData={setUserData} />;
 }
 
-function MangaList({setAuth, userData}) {
-  const [open, setOpen] = useState(false);
-
-  if(JSON.parse(localStorage.getItem("user")).username !== userData.username || JSON.parse(localStorage.getItem("user")).email !== userData.email) {
-    localStorage.removeItem("jwtToken");
-  }
-
-  const handleToggle = () => {
-    setOpen(!open);
-  }
-
-  const handleBackdrop = () => {
-    setOpen(false);
-  }
-
-  const logout = async e => {
-    e.preventDefault();
-    try {
-      localStorage.removeItem("jwtToken");
-      setAuth(false);
-    } catch (err) {
-      console.error(err.message)
-    }
-  }
-
-  let backdrop
-
-  if(open) {
-    backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
-  }
-
-  return (
-    <Fragment>
-      <NavBar userData={userData} handleToggle={handleToggle} logout={logout}/>
-      <SideBar estado={open} logout={logout}/>
-      {backdrop}
-      <Mangalistings userData={userData} />
-      <Footer>Made by <a target="_blank" rel="noopener noreferrer" href="https://github.com/xSerpine">Luís Ferro.</a></Footer>
-    </Fragment>
-  )
+const Register = () => {
+	return <RegisterUser />;
 }
 
-function Anime({setAuth, userData}) {
-  const [open, setOpen] = useState(false);
+const Home = ({ guest = false, logout }) => {
+	const [open, setOpen] = useState(false);
 
-  if(JSON.parse(localStorage.getItem("user")).username !== userData.username || JSON.parse(localStorage.getItem("user")).email !== userData.email) {
-    localStorage.removeItem("jwtToken");
-  }
+	const handleToggle = () => {
+		setOpen(!open);
+	};
 
-  const handleToggle = () => {
-    setOpen(!open);
-  }
+	const handleBackdrop = () => {
+		setOpen(false);
+	};
 
-  const handleBackdrop = () => {
-    setOpen(false);
-  }
+	let backdrop;
+	if (open) backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
 
-  const logout = async e => {
-    e.preventDefault();
-    try {
-      localStorage.removeItem("jwtToken");
-      setAuth(false);
-    } catch (err) {
-      console.error(err.message);
-    }
-  }
-
-  let backdrop;
-
-  if(open) {
-    backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
-  }
-
-  return (
-    <Fragment>
-      <NavBar userData={userData} handleToggle={handleToggle} logout={logout}/>
-      <SideBar estado={open} logout={logout}/>
-      {backdrop}
-      <UserAnime userData={userData} />
-      <Footer>Made by <a target="_blank" rel="noopener noreferrer" href="https://github.com/xSerpine">Luís Ferro.</a></Footer>
-    </Fragment>
-  )
+	return (
+		<Fragment>
+			<NavBar guest={guest} handleToggle={handleToggle} logout={logout} />
+			<SideBar guest={guest} estado={open} logout={logout} />
+			{backdrop}
+			<HomeUser guest={guest} />
+			<SpacingElement footer />
+			<Footer>
+				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>
+			</Footer>
+		</Fragment>
+	);
 }
 
-function Manga({setAuth, userData}) {
-  const [open, setOpen] = useState(false);
+const Browse = ({ guest = false, logout }) => {
+	const [open, setOpen] = useState(false);
 
-  if(JSON.parse(localStorage.getItem("user")).username !== userData.username || JSON.parse(localStorage.getItem("user")).email !== userData.email) {
-    localStorage.removeItem("jwtToken");
-  }
+	const handleToggle = () => {
+		setOpen(!open);
+	};
 
-  const handleToggle = () => {
-    setOpen(!open);
-  }
+	const handleBackdrop = () => {
+		setOpen(false);
+	};
 
-  const handleBackdrop = () => {
-    setOpen(false);
-  }
+	let backdrop;
+	if (open) backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
 
-  const logout = async e => {
-    e.preventDefault();
-    try {
-      localStorage.removeItem("jwtToken");
-      setAuth(false);
-    } catch (err) {
-      console.error(err.message);
-    }
-  }
-
-  let backdrop;
-
-  if(open) {
-    backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
-  }
-
-  return (
-    <Fragment>
-      <NavBar userData={userData} handleToggle={handleToggle} logout={logout}/>
-      <SideBar estado={open} logout={logout}/>
-      {backdrop}
-      <UserManga userData={userData} />
-      <Footer>Made by <a target="_blank" rel="noopener noreferrer" href="https://github.com/xSerpine">Luís Ferro.</a></Footer>
-    </Fragment>
-  )
+	return (
+		<Fragment>
+			<NavBar guest={guest} handleToggle={handleToggle} logout={logout} />
+			<SideBar guest={guest} estado={open} logout={logout} />
+			{backdrop}
+			<BrowseAniDash guest={guest} />
+			<Footer>
+				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>
+			</Footer>
+		</Fragment>
+	);
 }
 
-function Profile({setAuth, userData, setUser}) {
-  const [open, setOpen] = useState(false);
+const AnimeList = ({ guest = false, logout }) => {
+	const [open, setOpen] = useState(false);
 
-  if(JSON.parse(localStorage.getItem("user")).username !== userData.username || JSON.parse(localStorage.getItem("user")).email !== userData.email) {
-    localStorage.removeItem("jwtToken");
-  }
+	const handleToggle = () => {
+		setOpen(!open);
+	};
 
-  const handleToggle = () => {
-    setOpen(!open);
-  }
+	const handleBackdrop = () => {
+		setOpen(false);
+	};
 
-  const handleBackdrop = () => {
-    setOpen(false);
-  }
+	let backdrop;
+	if (open) backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
 
-  const logout = async e => {
-    e.preventDefault();
-    try {
-      localStorage.removeItem("jwtToken");
-      setAuth(false);
-    } catch (err) {
-      console.error(err.message);
-    }
-  }
-
-  let backdrop;
-
-  if(open) {
-    backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
-  }
-
-  return (
-    <Fragment>
-      <NavBar userData={userData} handleToggle={handleToggle} logout={logout}/>
-      <SideBar estado={open} logout={logout}/>
-      {backdrop}
-      <UserProfile userData={userData} setUser={setUser} />
-      <Footer>Made by <a target="_blank" rel="noopener noreferrer" href="https://github.com/xSerpine">Luís Ferro.</a></Footer>
-    </Fragment>
-  )
+	return (
+		<Fragment>
+			<NavBar guest={guest} handleToggle={handleToggle} logout={logout} />
+			<SideBar guest={guest} estado={open} logout={logout} />
+			{backdrop}
+			<Animelistings guest={guest} />
+			<SpacingElement footer />
+			<Footer>
+				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>
+			</Footer>
+		</Fragment>
+	);
 }
 
-function ProfileGivenUser({setAuth, userData}) {
-  const [open, setOpen] = useState(false);
+const MangaList = ({ guest = false, logout }) => {
+	const [open, setOpen] = useState(false);
 
-  if(JSON.parse(localStorage.getItem("user")).username !== userData.username || JSON.parse(localStorage.getItem("user")).email !== userData.email) {
-    localStorage.removeItem("jwtToken");
-  }
+	const handleToggle = () => {
+		setOpen(!open);
+	};
 
-  const handleToggle = () => {
-    setOpen(!open);
-  }
+	const handleBackdrop = () => {
+		setOpen(false);
+	};
 
-  const handleBackdrop = () => {
-    setOpen(false);
-  }
+	let backdrop;
+	if (open) backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
 
-  const logout = async e => {
-    e.preventDefault();
-    try {
-      localStorage.removeItem("jwtToken");
-      setAuth(false);
-    } catch (err) {
-      console.error(err.message);
-    }
-  }
-
-  let backdrop;
-
-  if(open) {
-    backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
-  }
-
-  return (
-    <Fragment>
-      <NavBar userData={userData} handleToggle={handleToggle} logout={logout}/>
-      <SideBar estado={open} logout={logout}/>
-      {backdrop}
-      <ProfileOfGivenUsername userData={userData} />
-      <Footer>Made by <a target="_blank" rel="noopener noreferrer" href="https://github.com/xSerpine">Luís Ferro.</a></Footer>
-    </Fragment>
-  )
+	return (
+		<Fragment>
+			<NavBar guest={guest} handleToggle={handleToggle} logout={logout} />
+			<SideBar guest={guest} estado={open} logout={logout} />
+			{backdrop}
+			<Mangalistings guest={guest} />
+			<SpacingElement footer />
+			<Footer>
+				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>
+			</Footer>
+		</Fragment>
+	);
 }
 
-function Activity({setAuth, userData}) {
-  const [open, setOpen] = useState(false);
+const Anime = ({ guest = false, logout }) => {
+	const [open, setOpen] = useState(false);
 
-  if(JSON.parse(localStorage.getItem("user")).username !== userData.username || JSON.parse(localStorage.getItem("user")).email !== userData.email) {
-    localStorage.removeItem("jwtToken");
-  }
+	const handleToggle = () => {
+		setOpen(!open);
+	};
 
-  const handleToggle = () => {
-    setOpen(!open);
-  }
+	const handleBackdrop = () => {
+		setOpen(false);
+	};
 
-  const handleBackdrop = () => {
-    setOpen(false);
-  }
+	let backdrop;
+	if (open) backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
 
-  const logout = async e => {
-    e.preventDefault();
-    try {
-      localStorage.removeItem("jwtToken");
-      setAuth(false);
-    } catch (err) {
-      console.error(err.message);
-    }
-  }
+	return (
+		<Fragment>
+			<NavBar guest={guest} handleToggle={handleToggle} logout={logout} />
+			<SideBar guest={guest} estado={open} logout={logout} />
+			{backdrop}
+			<AnimeInfo guest={guest} />
+			<SpacingElement footer />
+			<Footer>
+				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>
+			</Footer>
+		</Fragment>
+	);
+}
 
-  let backdrop;
+const Manga = ({ guest = false, logout }) => {
+	const [open, setOpen] = useState(false);
 
-  if(open) {
-    backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
-  }
+	const handleToggle = () => {
+		setOpen(!open);
+	};
 
-  return (
-    <Fragment>
-      <NavBar userData={userData} handleToggle={handleToggle} logout={logout}/>
-      <SideBar estado={open} logout={logout}/>
-      {backdrop}
-      <UserActivity userData={userData} />
-      <Footer>Made by <a target="_blank" rel="noopener noreferrer" href="https://github.com/xSerpine">Luís Ferro.</a></Footer>
-    </Fragment>
-  )
+	const handleBackdrop = () => {
+		setOpen(false);
+	};
+
+	let backdrop;
+	if (open) backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
+
+	return (
+		<Fragment>
+			<NavBar guest={guest} handleToggle={handleToggle} logout={logout} />
+			<SideBar guest={guest} estado={open} logout={logout} />
+			{backdrop}
+			<MangaInfo guest={guest} />
+			<SpacingElement footer />
+			<Footer>
+				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>
+			</Footer>
+		</Fragment>
+	);
+}
+
+const Profile = ({ logout }) => {
+	const [open, setOpen] = useState(false);
+
+	const handleToggle = () => {
+		setOpen(!open);
+	};
+
+	const handleBackdrop = () => {
+		setOpen(false);
+	};
+
+	let backdrop;
+	if (open) backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
+
+	return (
+		<Fragment>
+			<NavBar handleToggle={handleToggle} logout={logout} />
+			<SideBar estado={open} logout={logout} />
+			{backdrop}
+			<UserProfile />
+			<SpacingElement footer />
+			<Footer>
+				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>
+			</Footer>
+		</Fragment>
+	);
+}
+
+const Activity = ({ logout }) => {
+	const [open, setOpen] = useState(false);
+
+	const handleToggle = () => {
+		setOpen(!open);
+	};
+
+	const handleBackdrop = () => {
+		setOpen(false);
+	};
+
+	let backdrop;
+	if (open) backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
+
+	return (
+		<Fragment>
+			<NavBar handleToggle={handleToggle} logout={logout} />
+			<SideBar estado={open} logout={logout} />
+			{backdrop}
+			<UserActivity />
+			<SpacingElement footer />
+			<Footer>
+				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>
+			</Footer>
+		</Fragment>
+	);
+}
+
+const Settings = ({ logout }) => {
+	const [open, setOpen] = useState(false);
+
+	const handleToggle = () => {
+		setOpen(!open);
+	};
+
+	const handleBackdrop = () => {
+		setOpen(false);
+	};
+
+	let backdrop;
+	if (open) backdrop = <BackDrop handleBackdrop={handleBackdrop} />;
+
+	return (
+		<Fragment>
+			<NavBar handleToggle={handleToggle} logout={logout} />
+			<SideBar estado={open} logout={logout} />
+			{backdrop}
+			<h1 style={{color: '#fff', textAlign: 'center'}}>Settings are yet to be implemented.</h1>
+			<SpacingElement footer />
+			<Footer>
+				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>
+			</Footer>
+		</Fragment>
+	);
 }

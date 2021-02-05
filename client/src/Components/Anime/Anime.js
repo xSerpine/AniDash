@@ -1,69 +1,60 @@
-import React, { useState, useEffect, Fragment } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import ReactPlayer from 'react-player';
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
-import moment from 'moment-timezone';
-import { ContentInfoWrapper, ContentInfo, TituloWrapper, TextWrapper } from '../Styled Components/content';
-import { Titulo, SubTitulo } from '../Styled Components/text';
-import { Space } from '../Styled Components/navbar';
+import { ContentInfoBar, ContentWrapper } from '../Styled Components/content';
+import { SpacingElement } from '../Styled Components/navbar';
 import { Spinner } from '../Styled Components/loader';
-import Pagination from '../Geral/Pagination';
-import usePaginate from '../Utils/usePaginate';
-import ReadMoreReadLess from '../Utils/useReadMoreReadLess';
-import Countdown from '../Utils/useCountdown';
+import GenericContentInformation from '../GenericComponents/GenericContentInformation';
+import AnimeRecommendations from './AnimeRecommendations';
+import UserContext from '../../Context/UserContext';
+import GenericContentOverview from '../GenericComponents/GenericContentOverview';
+import AnimeStats from './AnimeStats';
+import AnimeCharacters from './AnimeCharacters';
+import AnimeTracking from './AnimeTracking';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-function UserAnime({userData}) {
+const AnimeInfo = ({ guest }) => {
+    const user = useContext(UserContext);
+    const history = useHistory();
+
     const [loading, setLoading] = useState(true);
     const [update, setUpdate] = useState(false);
-    const [resultsAnime, setResultsAnime] = useState([]);
-    const [resultsReviews, setResultsReviews] = useState([]);
-    const [resultsRecommendations, setResultsRecommendations] = useState([]);
-    const [isFav, setIsFav] = useState(false);   
+    const [anime, setAnime] = useState([]);
+    const [isFavorite, setIsFavorite] = useState(false); 
+    const [progress, setProgress] = useState(null);
+    const [choice, setChoice] = useState('Overview');
  
     const { id_anime } = useParams();
 
-    // eslint-disable-next-line
-    let Paginate, Pag, currentPage, teste;
-    const AnimeReviews = { Paginate, Pag, currentPage } = usePaginate(1, resultsReviews);
-    const AnimeRecommendations = { Paginate, Pag, currentPage } = usePaginate(userData.postsPerPageDetails, resultsRecommendations);
-
     const handleAnchor = () => {
-        setUpdate(!update);     //atualizar componente quando o user seleciona uma recomendação
+        setChoice('Overview');   
+        setLoading(true);
     }
 
-    window.onpopstate = function() {
-        if(window.location.pathname.includes("anime"))
-            setUpdate(!update);     //atualizar componente quando o user volta à página anterior
+    const handleChoice = (option) => {
+        setChoice(option);
     }
 
-    const handleAddFavorito = async() => {
+    const handleSelectedOption = async(selectedOption) => {
+        if(selectedOption) handleAddFavorite(false);
+
         try {
             const body = { 
-                email: userData.email, 
-                id_anime: resultsAnime.mal_id, 
-                type_anime: resultsAnime.type ? resultsAnime.type : "N/A", 
-                nome: resultsAnime.title, 
-                image: resultsAnime.image_url.replace(".jpg", "l.jpg"), 
-                episodes: resultsAnime.episodes ? resultsAnime.episodes : "N/A", 
-                status: resultsAnime.status ? resultsAnime.status : "N/A",
-                airing_start: resultsAnime.airing_start ? resultsAnime.airing_start : "N/A", 
-                broadcast: resultsAnime.broadcast ? resultsAnime.broadcast : "N/A", 
-                score: resultsAnime.score ? resultsAnime.score : "N/A", 
-                url: resultsAnime.url, 
-                synopsis: resultsAnime.synopsis ? resultsAnime.synopsis : "N/A"
+                progress: selectedOption,
+                email: user.email,
+                id: id_anime,
+                type: 'anime'
             };
 
-            const response = await fetch(`${APIUrl}/favoritos/anime`,
+            const response = await fetch(`${APIUrl}/favoritos/progress`,
                 {
-                    method: "POST",
+                    method: 'PUT',
                     headers: {
-                        "Content-type": "application/json"
+                        'Content-type': 'application/json'
                     },
                     body: JSON.stringify(body)
                 }
@@ -71,205 +62,176 @@ function UserAnime({userData}) {
     
             const parseRes = await response.json();
     
-            if (parseRes === "OK") {
-                toast.success(resultsAnime.title + " added to your list!", { position: "bottom-right" });
+            if (parseRes === 'OK') {
+                toast.info(`Anime set as ${selectedOption} sucessfully!`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(parseRes, { position: "bottom-right" });
+                toast.error(parseRes, { position: 'bottom-right' });
             }
-        } catch (err) {
-            console.error(err.message);
+        } catch (error) {
+            console.error(error);
         }
     }
 
-    const handleRemoveFavorito = async() => {
+    const handleAddFavorite = async(updateNow) => {
+        if(isFavorite) return;
+
         try {
-            const response = await fetch(`${APIUrl}/favoritos/${userData.email}/${id_anime}/anime`,
+            const body = { 
+                email: user.email, 
+                id_anime: anime.mal_id, 
+                type_anime: anime.type ? anime.type : 'N/A', 
+                name: anime.title, 
+                image: anime.image_url ? anime.image_url.replace('.jpg', 'l.jpg') : 'N/A', 
+                episodes: anime.episodes ? anime.episodes : 'N/A', 
+                status: anime.status ? anime.status : 'N/A',
+                airing_start: anime.airing_start ? anime.airing_start : 'N/A', 
+                broadcast: anime.broadcast ? anime.broadcast : 'N/A', 
+                score: anime.score ? anime.score : 'N/A', 
+                url: anime.url, 
+                synopsis: anime.synopsis ? anime.synopsis : 'N/A'
+            };
+
+            const response = await fetch(`${APIUrl}/favoritos/anime`,
                 {
-                    method: "DELETE",
+                    method: 'POST',
                     headers: {
-                        "Content-type": "application/json"
+                        'Content-type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                }
+            );
+    
+            const parseRes = await response.json();
+            if (parseRes === 'OK') {
+                toast.info(`${anime.title} added to your list!`, { position: 'bottom-right' });
+                updateNow && setUpdate(!update);
+            } else {
+                toast.error(parseRes, { position: 'bottom-right' });
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    const handleRemoveFavorite = async() => {
+        try {
+            const response = await fetch(`${APIUrl}/favoritos/${user.email}/${id_anime}/anime`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-type': 'application/json'
                     }
                 }
             );
             const parseRes = await response.json();
-    
-            if (parseRes === "OK") {
-                toast.success(resultsAnime.title + " removed from your list!", { position: "bottom-right" });
+            if (parseRes === 'OK') {
+                toast.info(`${anime.title} removed from your list!`, { position: 'bottom-right' });
                 setUpdate(!update);
             } 
-        } catch (err) {
-            console.error(err.message);
+        } catch (error) {
+            console.error(error);
         }
     }
 
-    async function checkIfFav() {
-        const res = await fetch(`${APIUrl}/favoritos/${userData.email}/${id_anime}/anime`);
+    const checkIfFavorite = async() => {
+        if(guest) return;
+
+        const res = await fetch(`${APIUrl}/favoritos/${user.email}/${id_anime}/anime`);
         const parseRes = await res.json();
-        if(parseRes) setIsFav(true);
+        if(parseRes) setIsFavorite(true);
+        else setIsFavorite(false);
+
+        const resAnimeFavorites = await fetch(`${APIUrl}/favoritos/${user.email}/anime`);
+        const AnimeFavoritesArray = await resAnimeFavorites.json();
+        const filteredAnimeFavoritesArray = [...AnimeFavoritesArray].filter(anime => anime.id_anime === parseInt(id_anime));
+        setProgress(filteredAnimeFavoritesArray.length > 0 ? filteredAnimeFavoritesArray[0].progress : 'Add to list');
     }
 
-    async function getAnime() {
+    const getAnime = async() => {
         const res = await fetch(`https://api.jikan.moe/v3/anime/${id_anime}`);
+        if(!res.ok) return history.push('/404');
         const AnimeArray = await res.json();
-        setResultsAnime(AnimeArray);
-    }
 
-    async function getReviews() {
-        const res = await fetch(`https://api.jikan.moe/v3/anime/${id_anime}/reviews`);
-        const ReviewsArray = await res.json();
-        setResultsReviews(ReviewsArray.reviews);
-    }
+        setAnime(AnimeArray);
 
-    async function getRecommendations() {
-        const res = await fetch(`https://api.jikan.moe/v3/anime/${id_anime}/recommendations`);
-        const RecommendationsArray = await res.json();
-        setResultsRecommendations(RecommendationsArray.recommendations);
+        document.title = `${AnimeArray.title} • AniDash`;
     }
 
     useEffect(() => {
-        window.scrollTo(0, 0);
-        checkIfFav();
-        getAnime();
-        getReviews();
-        setTimeout(() => {
-            getRecommendations();  
-            setLoading(false)
-        }, 1000);
-        setIsFav(false);
-   
+        checkIfFavorite();
+
         // eslint-disable-next-line
     }, [update])
 
-    if(resultsAnime.length === 0) return <Spinner />
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        checkIfFavorite();
+        getAnime();        
+        const loadingTime = setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+   
+        return () => {
+            handleAnchor();
+            clearTimeout(loadingTime);
+        }
+        // eslint-disable-next-line
+    }, [id_anime])
+
+    if(loading) return (
+        <>
+            <SpacingElement unwrapped />
+            <Spinner />
+        </>
+    )
 
     return (
-        <ContentInfoWrapper>
-            <TituloWrapper>
-                <Space />
-                {isFav 
-                    ? 
-                    <Titulo>{resultsAnime.title} <i onClick={handleRemoveFavorito} className='fas fa-heart'></i></Titulo> 
-                    : 
-                    <Titulo>{resultsAnime.title} <i onClick={handleAddFavorito} className='far fa-heart'></i></Titulo>
+        <ContentWrapper>
+            <SpacingElement unwrapped />
+            <GenericContentInformation 
+                guest={guest}
+                type='anime'
+                title={anime.title}
+                option={progress}
+                progress1='Completed'
+                progress2='Watching'
+                progress3='Planning'
+                progress4='Dropped'
+                array={anime}
+                isFavorite={isFavorite}
+                handleAddFavorite={handleAddFavorite}
+                handleRemoveFavorite={handleRemoveFavorite}
+                handleSelectedOption={handleSelectedOption}
+            />
+            <br/>
+            <ContentInfoBar>
+                <div className={choice === 'Overview' ? 'active' : ''} onClick={() => handleChoice('Overview')}>Overview</div>
+                {!guest && isFavorite && 
+                    <div className={choice === 'Tracking' ? 'active' : ''} onClick={() => handleChoice('Tracking')}>Tracking</div>
                 }
-                <Space />
-            </TituloWrapper>
-            <ContentInfo top>
-                <img src={resultsAnime.image_url.replace(".jpg", "l.jpg")} alt="Anime Cover" />
-                <ReadMoreReadLess text={resultsAnime.synopsis} />
-            </ContentInfo>
-            <SubTitulo style={{textAlign: "center", marginTop: "5%"}}>Overview</SubTitulo>
-            <ContentInfo middle>
-                <div className="playerWrapper">
-                    {resultsAnime.trailer_url ? 
-                        <ReactPlayer className="player" url={resultsAnime.trailer_url} /> 
-                        : 
-                        <div className="unavailable_player">N/A</div>
-                    }
-                </div>
-                <div>
-                    {resultsAnime.status === "Currently Airing" && (
-                        <p><b>Airing in</b>
-                            <br/>
-                            <Countdown 
-                                airingTime={
-                                    resultsAnime.broadcast.slice(resultsAnime.broadcast.length - 11, resultsAnime.broadcast.length - 6)
-                                }
-                                airingDate={
-                                    resultsAnime.broadcast.slice(0, resultsAnime.broadcast.length - 16)
-                                }
-                                type="favoritos"
-                            />
-                        </p>
-                    )}
-                    {resultsAnime.rank && (<p><b>Rank</b><br/>{resultsAnime.rank}</p>)}
-                    {resultsAnime.status && (<p><b>Status</b><br/>{resultsAnime.status}</p>)}
-                    {resultsAnime.premiered && (<p><b>Premiered</b><br/>{resultsAnime.premiered}</p>)}
-                    {resultsAnime.broadcast && (<p><b>Broadcast</b><br/>{resultsAnime.broadcast}</p>)}
-                    {resultsAnime.type && (<p><b>Format</b><br/>{resultsAnime.type}</p>)}
-                    {resultsAnime.episodes && (<p><b>Episodes</b><br/>{resultsAnime.episodes}</p>)}
-                    {resultsAnime.duration && (<p><b>Duration</b><br/>{resultsAnime.duration}</p>)}
-                    {resultsAnime.score && (<p><b>Score</b><br/>{resultsAnime.score}</p>)}
-                </div>
-            </ContentInfo>
-            {resultsReviews.length > 0 ? 
-                <Pagination 
-                    style={{marginTop: "5%"}} 
-                    Title={`Reviews - ${resultsReviews.length} in total`} 
-                    postsPerPage={1} 
-                    totalPosts={resultsReviews.length} 
-                    paginate={AnimeReviews.Paginate} 
-                    currentPage={AnimeReviews.currentPage}
-                /> 
-                : 
-                <SubTitulo style={{textAlign: "center", marginTop: "5%"}}>Reviews</SubTitulo> 
+                <div className={choice === 'Stats' ? 'active' : ''} onClick={() => handleChoice('Stats')}>Stats</div>
+                <div className={choice === 'Characters' ? 'active' : ''} onClick={() => handleChoice('Characters')}>Characters</div>
+                <div className={choice === 'Recommendations' ? 'active' : ''} onClick={() => handleChoice('Recommendations')}>Recommendations</div>
+            </ContentInfoBar>
+            <br/>
+            {choice === 'Overview' &&
+                <GenericContentOverview array={anime} />
             }
-            <ContentInfo single>
-                {resultsReviews.length > 0 ? 
-                    AnimeReviews.Pag.map(review => (
-                        <Fragment key={review.mal_id}>
-                            <TextWrapper>
-                                Posted by
-                                <a href={review.reviewer.url} target="_blank" rel="noopener noreferrer"> {review.reviewer.username} </a>
-                                on {moment(review.date.slice(0,10)).format("DD-MM-YYYY")}
-                            </TextWrapper>
-                            <TextWrapper scores>
-                                <p><b>Overall:</b> {review.reviewer.scores.overall}</p>
-                                <p><b>Story:</b> {review.reviewer.scores.story}</p>
-                                <p><b>Animation:</b> {review.reviewer.scores.animation}</p>
-                                <p><b>Sound:</b> {review.reviewer.scores.sound}</p>
-                                <p><b>Characters:</b> {review.reviewer.scores.character}</p>
-                                <p><b>Enjoyment:</b> {review.reviewer.scores.enjoyment}</p>
-                            </TextWrapper>
-                            <ReadMoreReadLess text={review.content.replace(/\\\n\r\n\\n\r\n/g, "\n").replace(/\\n/g, "")} />
-                        </Fragment>
-                    ))
-                    :
-                    <div style={{width: "77vw", textAlign: "center", padding: "1rem"}}>No reviews available for {resultsAnime.title}</div>
-                }
-            </ContentInfo>
-            {resultsRecommendations.length > 0 ? 
-                <Pagination 
-                    style={{marginTop: "5%"}} 
-                    Title={`Recommendations - ${resultsRecommendations.length} anime`} 
-                    postsPerPage={userData.postsPerPageDetails} 
-                    totalPosts={resultsRecommendations.length} 
-                    paginate={AnimeRecommendations.Paginate} 
-                    currentPage={AnimeRecommendations.currentPage}
-                /> 
-                : 
-                <SubTitulo style={{textAlign: "center", marginTop: "5%"}}>Recommendations</SubTitulo> 
+            {choice === 'Tracking' &&
+                <AnimeTracking id_anime={id_anime} user={user} total={anime.episodes} />
             }
-            <ContentInfo bottom last>
-                {loading ?
-                    <div style={{width: "77vw", textAlign: "center"}}><Spinner /></div>
-                    :
-                    resultsRecommendations.length > 0 ? 
-                        AnimeRecommendations.Pag.map((anime, index) => (
-                            <div className="item" key={index}>
-                                <OverlayTrigger
-                                    key={index}
-                                    placement="auto"
-                                    overlay={
-                                        <Tooltip className="AnimeDetails">
-                                            <h3><b>{anime.title}</b></h3>
-                                        </Tooltip>
-                                    }
-                                >
-                                    <div variant="secondary">
-                                        <Link onClick={handleAnchor} to={`/anime/${anime.mal_id}`}><img src={anime.image_url.replace(".jpg", "l.jpg")} alt="Anime Cover"/></Link>
-                                    </div>
-                                </OverlayTrigger>
-                    
-                            </div>
-                        )) 
-                        : 
-                        <div style={{width: "77vw", textAlign: "center"}}>No recommendations available for {resultsAnime.title}</div>
-                }
-            </ContentInfo>
-        </ContentInfoWrapper>
+            {choice === 'Stats' &&
+                <AnimeStats id_anime={id_anime} />
+            }
+            {choice === 'Characters' &&
+                <AnimeCharacters id_anime={id_anime} />
+            }
+            {choice === 'Recommendations' &&
+                <AnimeRecommendations id_anime={id_anime} />
+            }
+        </ContentWrapper>
     );
 }
 
-export default UserAnime;
+export default AnimeInfo;

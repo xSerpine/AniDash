@@ -24,9 +24,12 @@ const SubTitulo = styled.h4`
     text-align: left;
     padding: 1rem;
     font-size: 20px;
+    & span {
+        text-transform: capitalize; 
+    }
 `;
 
-const Footer = styled.div`
+const Footer = styled.footer`
     position: absolute;
     color: #fff;
     width:100%;

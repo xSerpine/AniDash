@@ -1,4 +1,37 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
+
+const FullPageWrapper = styled.div`
+    width: 100%;
+    height: 100vh;
+    ${props => props.auth && css`
+        background-image: url(/imagens/yourname.webp);
+    `}
+    ${props => props.other && css`
+        background-image: url(/imagens/yourlieinapril.webp);
+    `}
+    background-position: bottom;
+    background-repeat: no-repeat;
+    background-size: cover;
+`;
+
+const FormWrapper = styled.div`
+    width: 40%;
+    padding: 2rem;
+    background-color: #0b132b;
+    color: white;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    box-shadow: 20px 20px 50px #000;
+    opacity: 0.9;
+    border-radius: 5px;
+    @media (max-width: 768px) {
+        width: 100%;
+        padding: 15%;
+    }
+`;
 
 const Form = styled.form`
     width: 80%;
@@ -81,6 +114,33 @@ const InputWrapper = styled.div`
     }
 `;
 
+const InfoWrapper = styled.div`
+    position: relative;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 100%;
+    justify-items: center;
+    & .actions {
+        margin: 5px;
+        text-align: center;
+    }
+`;
+
+const IMGPreview = styled.div`
+    width: 100%;
+    text-align: center;
+    & img {
+        height: 150px;
+        width: 150px;
+        border-radius: 50%;
+    }
+`;
+
 export {
-    Form, InputWrapper
+    FullPageWrapper,
+    FormWrapper,
+    Form, 
+    InputWrapper,
+    InfoWrapper,
+    IMGPreview
 }

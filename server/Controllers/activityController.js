@@ -1,79 +1,80 @@
-const pool = require("../db");
+const pool = require('../db');
 
 module.exports = {
     postActivity : async function(req, res){
         try {
-            const { username, comentario } = req.body;
+            const { username, status } = req.body;
 
-            const user = await pool.query(
-                "select id_utilizador from utilizadores where username = $1", [username]
-            );
+            const user = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
 
-            await pool.query("insert into activity (id_utilizador, username, type_content, action, content) values ($1,$2,$3,$4,$5)", [user.rows[0].id_utilizador, username, "comentario", "comment", comentario])
+            await pool.query(
+                'INSERT INTO activity (id_user, username, type_content, action, content) VALUES ($1,$2,$3,$4,$5)', 
+                [user.rows[0]._id, username, 'comentario', 'comment', status]
+            )
             
-            return res.json("OK")
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Ocorreu um erro no servidor.");
+            return res.json('OK')
+        } catch (error) {
+            console.log(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
         }
     },
 
     getActivity : async function(req, res){
-        let following_ids = [], following_activity_ids = [];
+        let followingUserIDs = [], followingActivityIDs = [];
 
         try {
             const { username } = req.params;
             const page = req.query.page;
 
-            const user = await pool.query("select id_utilizador from utilizadores where username = $1", [username]);
-               
-            //Encontrar utilizadores que o utilizador 'username' segue
-            const user_following = await pool.query("select * from follows where id_follower = $1", [user.rows[0].id_utilizador]);
+            const user = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+            const userFollowing = await pool.query('SELECT * FROM follows WHERE id_follower = $1', [user.rows[0]._id]);
 
-            //Se não seguir ninguém, trata de devolver a atividade relativa aos seus próprios posts
-            if(user_following.rows.length === 0) {
-                const user_posts = await pool.query(`
-                    select * from activity
-                    where id_utilizador = $1 
-                        and action = 'comment'
-                    order by hora desc
-                    limit 20 OFFSET (${page} - 1) * 20
-                `, [user.rows[0].id_utilizador]);
-                return res.json(user_posts.rows);    
+            if(userFollowing.rows.length === 0) {
+                const userPosts = await pool.query(`
+                    SELECT * FROM activity
+                    WHERE id_user = $1 AND action = 'comment'
+                    ORDER BY hour DESC
+                    LIMIT 20 OFFSET (${page} - 1) * 20
+                `, [user.rows[0]._id]);
+                return res.json(userPosts.rows);    
             }
 
-            //Caso siga alguém, os IDs desse(s) utilizador(es) são mapeados para um array auxiliar
-            user_following.rows.map(user_fol => (
-                following_ids.push(user_fol.id_utilizador)
-            ));
+            if(userFollowing.rows.length > 0) {
+                userFollowing.rows.map(userFol => (
+                    followingUserIDs.push(userFol.id_user)
+                ));
+    
+                const users = await pool.query(`SELECT * FROM activity WHERE id_user IN (${followingUserIDs.join(',')})`);
+                if(users.rows.length > 0) {
+                    users.rows.map(userFol => (
+                        followingActivityIDs.push(userFol.id_user)
+                    ));
 
-            //Encontrar activity associada aos IDs dos utilizadores no array auxiliar
-            const users = await pool.query(`select * from activity where id_utilizador in (${following_ids.join(",")})`);
+                    const activity = await pool.query(`
+                        SELECT * FROM activity 
+                        WHERE id_user IN (${followingActivityIDs.join(',')}) 
+                        UNION
+                        SELECT * FROM activity
+                        WHERE id_user = $1 AND action = 'comment'
+                        ORDER BY hour DESC
+                        LIMIT 20 OFFSET (${page} - 1) * 20
+                    `, [user.rows[0]._id]);
 
-            //Se não encontrar nenhuma activity, sai
-            if(users.rows.length === 0) return res.json(false);
+                    return res.json(activity.rows);
+                }
+            }
 
-            //Caso exista alguma activity, os IDs dos utilizadores com activity são mapeados para um segundo array auxiliar
-            users.rows.map(user_fol => (
-                following_activity_ids.push(user_fol.id_utilizador)
-            ));
-
-            //Encontra toda a activity associado os utilizadores no segundo array
-            const activity = await pool.query(`
-                select * from activity 
-                where id_utilizador in (${following_activity_ids.join(",")}) 
-                union
-                select * from activity
-                where id_utilizador = $1 
-                    and action = 'comment'
-                order by hora desc
-                limit 20 OFFSET (${page} - 1) * 20
-            `, [user.rows[0].id_utilizador]);
-
-            return res.json(activity.rows);
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Ocorreu um erro no servidor.");
+            const userPosts = await pool.query(`
+                SELECT * FROM activity
+                WHERE id_user = $1 AND action = 'comment'
+                ORDER BY hour DESC
+                LIMIT 20 OFFSET (${page} - 1) * 20
+            `, [user.rows[0]._id]);
+            
+            return res.json(userPosts.rows); 
+        } catch (error) {
+            console.log(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
         }
     }
 }

@@ -1,184 +1,288 @@
-const pool = require("../db");
+const fetch = require('node-fetch');
+const pool = require('../db');
 
 module.exports = {
-    postFavoritoAnime : async function(req, res){
-        const { email, id_anime, type_anime, nome, image, episodes, status, airing_start, broadcast, score, url, synopsis } = req.body;
+    postFavoriteAnime : async function(req, res){
+        const { email, id_anime, type_anime, name, image, episodes, status, airing_start, broadcast, score, url, synopsis } = req.body;
 
         try { 
-            const user = await pool.query(
-                "select * from utilizadores where email = $1", [email]
+            const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+
+            await pool.query(
+                'INSERT INTO animefavorites (id_user, id_anime, type_anime, name, image, episodes, status, airing_start, broadcast, score, url, synopsis) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',
+                [user.rows[0]._id, id_anime, type_anime, name, image, episodes, status, airing_start, broadcast, score, url, synopsis]
             );
 
             await pool.query(
-                "INSERT INTO favoritos_anime (id_utilizador, id_anime, type_anime, nome, image, episodes, status, airing_start, broadcast, score, url, synopsis) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *",
-                [user.rows[0].id_utilizador, id_anime, type_anime, nome, image, episodes, status, airing_start, broadcast, score, url, synopsis]
+                'INSERT INTO activity (id_user, username, type_content, action, id_content, content) VALUES ($1,$2,$3,$4,$5,$6)', 
+                [user.rows[0]._id, user.rows[0].username, 'anime', 'added', id_anime, name]
             );
 
-            await pool.query(
-                "insert into activity (id_utilizador, username, type_content, action, id_content, content) values ($1,$2,$3,$4,$5,$6)", [user.rows[0].id_utilizador, user.rows[0].username, "anime", "added", id_anime, nome]
-            );
-
-            res.json("OK");
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Ocorreu um erro no servidor.");
+            res.json('OK');
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
         }
     },
 
-    postFavoritoManga : async function(req, res){
-        const { email, id_manga, type_manga, nome, image, chapters, volumes, status, score, url, synopsis } = req.body;
+    postFavoriteManga : async function(req, res){
+        const { email, id_manga, type_manga, name, image, chapters, volumes, status, score, url, synopsis } = req.body;
 
         try { 
-            const user = await pool.query(
-                "select * from utilizadores where email = $1", [email]
+            const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+
+            await pool.query(
+                'INSERT INTO mangafavorites (id_user, id_manga, type_manga, name, image, chapters, volumes, status, score, url, synopsis) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
+                [user.rows[0]._id, id_manga, type_manga, name, image, chapters, volumes, status, score, url, synopsis]
             );
 
             await pool.query(
-                "INSERT INTO favoritos_manga (id_utilizador, id_manga, type_manga, nome, image, chapters, volumes, status, score, url, synopsis) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *",
-                [user.rows[0].id_utilizador, id_manga, type_manga, nome, image, chapters, volumes, status, score, url, synopsis]
-            );
-
-            await pool.query(
-                "insert into activity (id_utilizador, username, type_content, action, id_content, content) values ($1,$2,$3,$4,$5,$6)", [user.rows[0].id_utilizador, user.rows[0].username, "manga", "added", id_manga, nome]
+                'INSERT INTO activity (id_user, username, type_content, action, id_content, content) VALUES ($1,$2,$3,$4,$5,$6)', 
+                [user.rows[0]._id, user.rows[0].username, 'manga', 'added', id_manga, name]
             );
   
-            res.json("OK");
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Ocorreu um erro no servidor.");
+            res.json('OK');
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
         }
     },
 
-    getFavoritos : async function(req, res){
+    getFavorite : async function(req, res){
+        let users;
+
+        try{
+            const { id, user, type } = req.params;
+
+            if(user.includes('@')) users = await pool.query('SELECT * FROM users WHERE email = $1', [user]);  
+            else users = await pool.query('SELECT * FROM users WHERE username = $1', [user]);
+
+            const favoritos = await pool.query(`
+                SELECT * FROM ${type}favorites 
+                WHERE id_user = $1 AND id_${type} = $2
+            `, [users.rows[0]._id, id]);
+
+            res.json(favoritos.rows[0]);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
+        }
+    },
+
+    getFavorites : async function(req, res){
         let users;
 
         try{
             const { user, type } = req.params;
+            const page = req.query.page;
 
-            if(user.includes("@"))
-                users = await pool.query("SELECT * FROM utilizadores WHERE email = $1", [user]);  
-            else 
-                users = await pool.query("SELECT * FROM utilizadores WHERE username = $1", [user]);
+            if(user.includes('@')) users = await pool.query('SELECT * FROM users WHERE email = $1', [user]);  
+            else users = await pool.query('SELECT * FROM users WHERE username = $1', [user]);
 
             const favoritos = await pool.query(`
-                select * from favoritos_${type} 
-                where id_utilizador = $1
-                `, [users.rows[0].id_utilizador]
-            );
+                SELECT * FROM ${type}favorites 
+                WHERE id_user = $1
+                ORDER BY name ASC
+                ${page ? `LIMIT 20 OFFSET (${page} - 1) * 20` : ''}
+            `, [users.rows[0]._id]);
 
             res.json(favoritos.rows);
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Ocorreu um erro no servidor.");
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
         }
     },
 
-    getFavoritosOnGoing : async function(req, res){
+    getFavoritesOnGoing : async function(req, res){
         let status;
 
         try{
             const { email, type } = req.params;
+            const page = req.query.page;
 
-            const user = await pool.query(
-                "select * from utilizadores where email = $1", [email]
-            );
+            const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
-            if(type == "anime")
-                status = "Currently Airing";
-            else 
-                status = "Publishing";
+            if(type == 'anime') status = 'Currently Airing';
+            else status = 'Publishing';
 
-            const favoritos = await pool.query(
-                `select * from favoritos_${type} where id_utilizador = $1 and status = $2`, [user.rows[0].id_utilizador, status]
-            );
+            const ongoingFavorites = await pool.query(`
+                SELECT * FROM ${type}favorites 
+                WHERE id_user = $1 AND status = $2
+                ORDER BY name ASC
+                LIMIT 20 OFFSET (${page} - 1) * 20
+            `, [user.rows[0]._id, status]);
 
-            res.json(favoritos.rows);
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Ocorreu um erro no servidor.");
+            res.json(ongoingFavorites.rows);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
         }
     },
 
-    getFavoritosFinished : async function(req, res){
+    getFavoritesFinished : async function(req, res){
         let status;
 
         try{
             const { email, type } = req.params;
+            const page = req.query.page;
 
-            const user = await pool.query(
-                "select * from utilizadores where email = $1", [email]
-            );
+            const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
-            if(type == "anime")
-                status = "Finished Airing";
-            else 
-                status = "Finished";
+            if(type == 'anime') status = 'Finished Airing';
+            else status = 'Finished';
 
-            const favoritos = await pool.query(
-                `select * from favoritos_${type} where id_utilizador = $1 and status = $2`, [user.rows[0].id_utilizador, status]
-            );
+            const finishedFavorites = await pool.query(`
+                SELECT * FROM ${type}favorites 
+                WHERE id_user = $1 AND status = $2
+                ORDER BY name ASC
+                LIMIT 20 OFFSET (${page} - 1) * 20
+            `, [user.rows[0]._id, status]);
 
-            res.json(favoritos.rows);
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Ocorreu um erro no servidor.");
+            res.json(finishedFavorites.rows);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
         }
     },
 
-    VerificarFavoritos : async function(req, res){
-        let existe_favorito_anime, existe_favorito_manga;
+    getFavoritesProgress : async function(req, res){
+        try{
+            const { progress, email, type } = req.params;
+            const page = req.query.page;
+
+            const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+
+            const progressFavorites = await pool.query(`
+                SELECT * FROM ${type}favorites 
+                WHERE id_user = $1 AND progress = $2
+                ORDER BY name ASC
+                LIMIT 50 OFFSET (${page} - 1) * 50
+            `, [user.rows[0]._id, progress]);
+
+            res.json(progressFavorites.rows);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
+        }
+    },
+
+    checkFavorites : async function(req, res){
+        let animeExists, mangaExists;
 
         try{
             const { email, id, type } = req.params;
 
-            const user = await pool.query(
-                "select * from utilizadores where email = $1", [email]
+            const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+
+            const favorites = await pool.query(
+                `SELECT * FROM ${type}favorites WHERE id_user = $1`, 
+                [user.rows[0]._id]
             );
 
-            const favoritos_dup = await pool.query(
-                `select * from favoritos_${type} where id_utilizador = $1`, [user.rows[0].id_utilizador]
-            );
-
-            if(type == "anime") {
-                existe_favorito_anime = favoritos_dup.rows.map(fav => (fav.id_anime == id));
-                if(existe_favorito_anime.includes(true)) return res.json(true);
+            if(type == 'anime') {
+                animeExists = favorites.rows.some(favorite => (favorite.id_anime == id));
+                if(animeExists) return res.json(true);
             }
-            if(type == "manga") {
-                existe_favorito_manga = favoritos_dup.rows.map(fav => (fav.id_manga == id));
-                if(existe_favorito_manga.includes(true)) return res.json(true);
+            if(type == 'manga') {
+                mangaExists = favorites.rows.some(favorite => (favorite.id_manga == id));
+                if(mangaExists) return res.json(true);
             }
 
             res.json(false);
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Ocorreu um erro no servidor.");
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
         }
     },
 
-    DeleteFavorito : async function(req, res){
+    putFavoritosEpisodesChapters : async function(req, res){
+        try{
+            const { count, completed, email, id, type } = req.body;
+
+            const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+
+            if(type == 'anime' && !isNaN(count)) {
+                await pool.query(`
+                    UPDATE animefavorites 
+                    SET watched = ${count} ${completed ? ", progress = 'completed'" : ", progress = 'watching'"}
+                    WHERE id_user = $1 AND id_anime = $2
+                `,[user.rows[0]._id, id]);
+
+                return res.json('OK');
+            }
+            if(type == 'manga' && !isNaN(count)) {
+                await pool.query(`
+                    UPDATE mangafavorites 
+                    SET read = ${count} ${completed ? ", progress = 'completed'" : ", progress = 'reading'"}
+                    WHERE id_user = $1 AND id_manga = $2
+                `,[user.rows[0]._id, id]);
+
+                return res.json('OK');
+            }
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
+        }
+    },
+
+    putFavoritosProgress : async function(req, res){
+        try{
+            const { progress, email, id, type } = req.body;
+
+            const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+
+            const resJikan = await fetch(`https://api.jikan.moe/v3/${type}/${id}`);
+            const content = await resJikan.json();
+
+            if(type == 'anime' && progress) {
+                await pool.query(`
+                    UPDATE animefavorites 
+                    SET progress = '${progress}' ${progress === 'completed' ? `, watched = ${content.episodes}` : ''} 
+                    WHERE id_user = $1 AND id_anime = $2
+                `,[user.rows[0]._id, id]);                
+
+                return res.json('OK');
+            }
+            if(type == 'manga' && progress) {
+                await pool.query(`
+                    UPDATE mangafavorites 
+                    SET progress = '${progress}' ${progress === 'completed' ? `, read = ${content.chapters}` : ''} 
+                    WHERE id_user = $1 AND id_manga = $2
+                `,[user.rows[0]._id, id]);
+
+                return res.json('OK');
+            }
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
+        }
+    },
+
+    deleteFavorite : async function(req, res){
         try{
             const { email, id, type } = req.params;
 
-            const user = await pool.query(
-                "select * from utilizadores where email = $1", [email]
-            );
+            const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
             const favorito = await pool.query(
-                `select * from favoritos_${type} where id_utilizador = $1 and id_${type} = $2`, [user.rows[0].id_utilizador, id]
+                `SELECT * FROM ${type}favorites WHERE id_user = $1 AND id_${type} = $2`, 
+                [user.rows[0]._id, id]
             );
 
             await pool.query(
-                "insert into activity (id_utilizador, username, type_content, action, id_content, content) values ($1,$2,$3,$4,$5,$6)", [user.rows[0].id_utilizador, user.rows[0].username, type, "removed", id, favorito.rows[0].nome]
+                'INSERT INTO activity (id_user, username, type_content, action, id_content, content) VALUES ($1,$2,$3,$4,$5,$6)', 
+                [user.rows[0]._id, user.rows[0].username, type, 'removed', id, favorito.rows[0].name]
             );
 
             await pool.query(
-                `delete from favoritos_${type} where id_utilizador = $1 and id_${type} = $2`, [user.rows[0].id_utilizador, id]
+                `DELETE FROM ${type}favorites where id_user = $1 and id_${type} = $2`, 
+                [user.rows[0]._id, id]
             );
             
-            res.json("OK");
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Ocorreu um erro no servidor.");
+            res.json('OK');
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Ocorreu um erro no servidor.');
         }
     }
 }
