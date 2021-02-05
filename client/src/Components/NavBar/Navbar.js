@@ -94,7 +94,7 @@ function NavBar({ guest, handleToggle, logout }) {
                 </Nav>
             </Header>
             <SpacingElement />
-            <Anchor className={showAnchor && 'active'} onClick={handleAnchor}><i className='fas fa-arrow-alt-circle-up'></i></Anchor>
+            <Anchor className={showAnchor && 'active'} onClick={handleAnchor}><i className='far fa-arrow-alt-circle-up'></i></Anchor>
         </Fragment>
     );
 }

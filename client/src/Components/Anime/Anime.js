@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -29,6 +29,15 @@ const AnimeInfo = ({ guest }) => {
     const [choice, setChoice] = useState('Overview');
  
     const { id_anime } = useParams();
+
+    const itemRef = useRef();
+
+    const handleClick = () => {
+        if(itemRef.current.classList.contains('active')) 
+            itemRef.current.classList.remove('active');
+        else 
+            itemRef.current.classList.add('active');
+    }
 
     const handleAnchor = () => {
         setChoice('Overview');   
@@ -203,6 +212,8 @@ const AnimeInfo = ({ guest }) => {
                 handleAddFavorite={handleAddFavorite}
                 handleRemoveFavorite={handleRemoveFavorite}
                 handleSelectedOption={handleSelectedOption}
+                handleClick={handleClick}
+                itemRef={itemRef}
             />
             <br/>
             <ContentInfoBar>

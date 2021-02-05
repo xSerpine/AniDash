@@ -17,7 +17,9 @@ const GenericContentInformation = ({
     isFavorite,
     handleAddFavorite,
     handleRemoveFavorite,
-    handleSelectedOption
+    handleSelectedOption,
+    handleClick,
+    itemRef
 }) => {
     const [isResized, setIsResized] = useState(window.innerWidth);
 
@@ -39,7 +41,7 @@ const GenericContentInformation = ({
                     <img src={array.image_url ? array.image_url.replace('.jpg', 'l.jpg') : ''} alt={`${array.title} cover`} />
                     {!guest &&
                         <ContentActions>
-                            <div className='status'>
+                            <div className='status' ref={itemRef} onClick={handleClick ? handleClick : null}>
                                 <div className='selected'>
                                     <span>{option}</span>
                                     <i className='fas fa-caret-down'></i>

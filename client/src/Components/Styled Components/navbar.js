@@ -6,6 +6,8 @@ const Anchor = styled.div`
     bottom: 50px;
     right: 30px;
     cursor: pointer;
+    text-shadow: 0 0 8px #000;
+    z-index: 1000;
     & i {
         color: #FFF05A;
         font-size: 50px;

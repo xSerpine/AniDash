@@ -428,7 +428,7 @@ const ContentActions = styled.div`
         color: #000;
         position: relative;
     }
-    & .status:hover .options {
+    & .status.active .options {
         opacity: 1;
         visibility: visible;
     }
@@ -463,7 +463,7 @@ const ContentActions = styled.div`
     & .options div {
         border-radius: 0;
         border-bottom: 2px solid #FFF05A;
-        background: #1c2541;
+        background: #13192d;
         color: #fff;
     }
     & .options div:hover {
