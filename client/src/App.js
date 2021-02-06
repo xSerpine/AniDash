@@ -26,7 +26,7 @@ const APIUrl = 'https://anidash-api.herokuapp.com';
 
 const App = () => {
 	const data = localStorage.getItem('user');
-	const token = localStorage.getItem('jwtToken')
+	const token = localStorage.getItem('jwtToken');
 
 	const [isAuthenticated, setIsAuthenticated] = useState(token ? true : false);
 	const [user, setUser] = useState({
@@ -39,7 +39,9 @@ const App = () => {
 	const checkAuthenticated = async () => {
 		try {
 			const res = await fetch(`${APIUrl}/autenticar/verificar`, {
-				headers: { jwtToken: localStorage.getItem('jwtToken') },
+				headers: {
+					Authorization: localStorage.getItem('jwtToken')
+				}
 			});
 
 			const parseRes = await res.json();
