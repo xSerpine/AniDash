@@ -8,15 +8,16 @@ function SideBar({ guest, estado, logout }) {
     const user = useContext(UserContext);
 
     let classes = '';
+    if(estado) {
+        classes = 'open'; 
+        document.documentElement.style = 'overflow: hidden';
+    }
+    else document.documentElement.style = '';
 
-    if(estado) classes = 'open'; 
     return (
        <SideNav className={classes}>
-           <div>
-                <Titulo style={{fontSize: '25px'}}>Ani<span style={{color: '#fff'}}>Dash</span></Titulo>
-                <SubTitulo style={{fontSize: '15px', textAlign: 'center'}}>Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a></SubTitulo>
-           </div>
-           <ul>
+            <Titulo style={{fontSize: '25px'}}><Link to='/'>Ani<span style={{color: '#fff'}}>Dash</span></Link></Titulo> 
+            <ul>
                 <li><Link to={guest ? '/guest' : '/home'}><i className='fas fa-home'></i></Link></li>
                 <li><Link to={guest ? '/guest/search' : '/search'}><i className='fas fa-search'></i></Link></li>
                 <li><Link to={guest ? '/guest/anime' : '/anime'}>Anime</Link></li>
@@ -28,6 +29,9 @@ function SideBar({ guest, estado, logout }) {
                     <li><Link to={`/profile/${user.username}`}>Profile</Link></li>
                 }
                 {!guest &&
+                    <li><Link to='/settings'>Settings</Link></li>
+                }
+                {!guest &&
                     <li><span onClick={logout}>Logout</span></li>
                 }
                 {guest &&
@@ -36,7 +40,8 @@ function SideBar({ guest, estado, logout }) {
                 {guest &&
                     <li><Link to='/register'>Sign up</Link></li>
                 }
-           </ul>
+            </ul>
+            <SubTitulo style={{fontSize: '15px', textAlign: 'center'}}>Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a></SubTitulo>       
        </SideNav>
     );
 }

@@ -36,7 +36,7 @@ const RecoverPassword = () => {
                 token: token,
                 password: password
             }
-            const response = await fetch(`${APIUrl}/users/recover`,
+            const res = await fetch(`${APIUrl}/users/recover`,
                 {
                     method: 'PUT',
                     headers: {
@@ -46,7 +46,7 @@ const RecoverPassword = () => {
                 }
             );
 
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.success('Password has been updated! You can now login.', { position: 'bottom-right' });
                 setInputs({
                     password: '',
@@ -54,7 +54,7 @@ const RecoverPassword = () => {
                 });
                 setRecovered(true);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.log(error);

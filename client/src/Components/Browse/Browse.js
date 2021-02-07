@@ -8,7 +8,7 @@ import { SpacingElement } from '../Styled Components/navbar';
 const BrowseAniDash = ({ guest }) => {
     document.title = 'Browse • AniDash';
     
-    const [option, setOption] = useState(undefined);
+    const [option, setOption] = useState(guest ? 'Anime/Manga' : undefined);
 
     const handleChoice = (choice) => {
         setOption(choice);
@@ -17,16 +17,16 @@ const BrowseAniDash = ({ guest }) => {
     return (
         <Fragment>
             <SpacingElement unwrapped />
-            <Titulo primary>Search Options</Titulo>
             {!guest ?
+                <Titulo primary>Search Options</Titulo>
+                :
+                <Titulo>Browse</Titulo>
+            }
+            {!guest &&
                 <SearchOptions>
                     {['Anime/Manga', 'Users'].map((options, index) => (  
                         <p onClick={() => handleChoice(options)} key={index}>{options}</p>       
                     ))}
-                </SearchOptions>  
-                :
-                <SearchOptions style={{gridTemplateColumns: 'auto'}}>
-                    <p onClick={() => handleChoice('Anime/Manga')}>Anime/Manga</p>       
                 </SearchOptions> 
             }
             {option === 'Anime/Manga' && <BrowseContent guest={guest} />}

@@ -59,17 +59,14 @@ const InputWrapper = styled.div`
         padding: 7px 0;
         background: transparent;
         transition: border-color 0.2s;
-        
         &::placeholder {
             color: transparent;
         }
-
         &:placeholder-shown ~ label {
             font-size: 1.3rem;
             cursor: text;
             top: 20px;
         }
-
         ~ label {
             position: absolute;
             top: 0;
@@ -86,6 +83,13 @@ const InputWrapper = styled.div`
         transition: 0.2s;
         font-size: 20px;
         color: #FFF05A;
+    }
+    & label span {
+        display: flex; 
+        align-items: center;
+    }
+    & label span i {
+        padding-right: 5px;
     }
     & input:focus {
         border-color: #FFF05A;
@@ -177,6 +181,9 @@ const IMGPreview = styled.div`
         height: 150px;
         width: 150px;
         border-radius: 50%;
+    }
+    @media (max-width: 376px) {
+        display: none;
     }
 `;
 

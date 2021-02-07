@@ -61,7 +61,7 @@ function UserSettings({ setUserData }) {
                 avatar: !avatar.includes('https://res.cloudinary.com') ? avatar : null,
                 sfw: sfw !== user.SFW ? sfw : null
             };
-            const response = await fetch(`${APIUrl}/users/profile`,
+            const res = await fetch(`${APIUrl}/users/profile`,
                 {
                     method: 'PUT',
                     headers: {
@@ -72,13 +72,13 @@ function UserSettings({ setUserData }) {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
 
-            if(response.status === 200) {
-                const parseRes = await response.json();
+            if(res.status === 200) {
+                const parseRes = await res.json();
 
                 toast.success('Your settings have been updated!', { position: 'bottom-right' });
                 localStorage.setItem('user', JSON.stringify({
@@ -90,7 +90,7 @@ function UserSettings({ setUserData }) {
                 setUserData(parseRes.username, parseRes.email, parseRes.avatar, parseRes.sfw);
             }
             else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);

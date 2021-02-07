@@ -71,7 +71,7 @@ const OngoingFavorites = ({ type }) => {
                 type: type
             };
 
-            const response = await fetch(`${APIUrl}/favorites/counter`,
+            const res = await fetch(`${APIUrl}/favorites/counter`,
                 {
                     method: 'PUT',
                     headers: {
@@ -82,15 +82,15 @@ const OngoingFavorites = ({ type }) => {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
 
-            if (response.status === 200) {
+            if (res.status === 200) {
                 setUpdatedItem({ arrayIndex: arrayIndex, contentId: id});
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);

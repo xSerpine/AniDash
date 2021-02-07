@@ -713,6 +713,10 @@ const Message = styled.div`
     padding: 5%;
     opacity: 0.9;
     border-radius: 5px;
+    @media (max-width: 768px) {
+        width: 100%;
+        padding: 15%;
+    }
 `;
 
 export {

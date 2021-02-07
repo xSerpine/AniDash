@@ -54,7 +54,7 @@ function UserProfile() {
                 id_follower: user.id, 
             };
 
-            const response = await fetch(`${APIUrl}/follows`,
+            const res = await fetch(`${APIUrl}/follows`,
                 {
                     method: 'POST',
                     headers: {
@@ -65,16 +65,16 @@ function UserProfile() {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
     
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.success(`You're now following ${profile.username}`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -88,7 +88,7 @@ function UserProfile() {
                 id_follower: user.id,  
             };
 
-            const response = await fetch(`${APIUrl}/follows`,
+            const res = await fetch(`${APIUrl}/follows`,
                 {
                     method: 'DELETE',
                     headers: {
@@ -99,16 +99,16 @@ function UserProfile() {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
     
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.success(`You stopped following ${profile.username}`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);

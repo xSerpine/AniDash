@@ -59,7 +59,7 @@ function MangaInfo({ guest }) {
                 type: 'manga'
             };
 
-            const response = await fetch(`${APIUrl}/favorites/progress`,
+            const res = await fetch(`${APIUrl}/favorites/progress`,
                 {
                     method: 'PUT',
                     headers: {
@@ -70,16 +70,16 @@ function MangaInfo({ guest }) {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
     
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.info(`Manga set as ${selectedOption} sucessfully!`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -104,7 +104,7 @@ function MangaInfo({ guest }) {
                 synopsis: manga.synopsis ? manga.synopsis : 'N/A'
             };
 
-            const response = await fetch(`${APIUrl}/favorites/manga`,
+            const res = await fetch(`${APIUrl}/favorites/manga`,
                 {
                     method: 'POST',
                     headers: {
@@ -115,16 +115,16 @@ function MangaInfo({ guest }) {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
     
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.info(`${manga.title} added to your list!`, { position: 'bottom-right' });
                 updateNow && setUpdate(!update);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -133,7 +133,7 @@ function MangaInfo({ guest }) {
 
     const handleRemoveFavorite = async() => {
         try {
-            const response = await fetch(`${APIUrl}/favorites/${user.id}/${id_manga}/manga`,
+            const res = await fetch(`${APIUrl}/favorites/${user.id}/${id_manga}/manga`,
                 {
                     method: 'DELETE',
                     headers: {
@@ -143,16 +143,16 @@ function MangaInfo({ guest }) {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
     
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.info(`${manga.title} removed from your list!`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);

@@ -108,21 +108,19 @@ const SideNav = styled.nav`
     z-index: 200;
     transform: translateX(-100%);
     transition: transform 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     & ul {
-        height: 80%;
-        width: inherit;
         list-style: none;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        padding: 0;
+        margin: 0;
     }
     & ul li {
         padding: 1rem;
-        width: inherit;
         margin: 0 auto;
         text-align:center;  
-        font-size: 18px !important;
+        font-size: 18px;
     }
     & span {
         color: #FFF05A;

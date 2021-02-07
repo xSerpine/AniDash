@@ -41,8 +41,8 @@ const UserActivity = () => {
     }, [loading, hasMore])
 
     const getActivity = async() => {
-        const response = await fetch(`${APIUrl}/activity/${user.id}?page=${currentPage}`);
-        const ActivityArray = await response.json();
+        const res = await fetch(`${APIUrl}/activity/${user.id}?page=${currentPage}`);
+        const ActivityArray = await res.json();
         ActivityArray.length === 0 ? setHasMore(false) : setHasMore(true);
         setActivity(activity.concat(ActivityArray));
         setLoading(false);
@@ -62,7 +62,7 @@ const UserActivity = () => {
                 id: user.id, 
                 status: value
             };
-            const response = await fetch(`${APIUrl}/activity`,
+            const res = await fetch(`${APIUrl}/activity`,
                 {
                     method: 'POST',
                     headers: {
@@ -73,12 +73,12 @@ const UserActivity = () => {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
 
-            if(response.status === 200) {
+            if(res.status === 200) {
                 toast.success('Status added with success!', { position: 'bottom-right' });
                 setValue('');
                 setCurrentPage(1);
@@ -86,7 +86,7 @@ const UserActivity = () => {
                 setUpdate(!update);
             }
             else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -98,7 +98,7 @@ const UserActivity = () => {
             <SpacingElement unwrapped />
             <Titulo>Activity</Titulo>
             <InputWrapper style={{textAlign: 'right'}}>
-                <textarea rows='2' onChange={e => setValue(e.target.value)} value={value} placeholder='Message your followers!'></textarea>           
+                <textarea rows='2' onChange={e => setValue(e.target.value)} value={value} placeholder="What's happening?"></textarea>           
                 <Btn onClick={addStatus} style={{marginTop: '2%'}} primary>Post status</Btn>
             </InputWrapper>
             <br/>

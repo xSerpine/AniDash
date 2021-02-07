@@ -48,7 +48,7 @@ const RegisterUser = () => {
 
         try {
             const body = { username, email, password, avatar };
-            const response = await fetch(`${APIUrl}/users`,
+            const res = await fetch(`${APIUrl}/users`,
                 {
                     method: 'POST',
                     headers: {
@@ -58,7 +58,7 @@ const RegisterUser = () => {
                 }
             );
 
-            if(response.status === 200) {
+            if(res.status === 200) {
                 toast.success('Account created! Please confirm your email.', { position: 'bottom-right' });
                 setAvatar('');
                 setInputs({
@@ -69,7 +69,7 @@ const RegisterUser = () => {
                 });
             }
             else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);

@@ -28,7 +28,7 @@ const LoginUser = ({ setAuth, setUserData }) => {
         e.preventDefault();
         try {
             const body = { user, password };
-            const response = await fetch(`${APIUrl}/auth/login`,
+            const res = await fetch(`${APIUrl}/auth/login`,
                 {
                     method: 'POST',
                     headers: {
@@ -38,8 +38,8 @@ const LoginUser = ({ setAuth, setUserData }) => {
                 }
             );
     
-            if (response.status === 200) {
-                const parseRes = await response.json();
+            if (res.status === 200) {
+                const parseRes = await res.json();
                 
                 toast.success(`Welcome to AniDash, ${parseRes.userInfo.username}!`, { position: 'bottom-right' });
                 localStorage.setItem('jwtToken', parseRes.jwtToken);
@@ -54,7 +54,7 @@ const LoginUser = ({ setAuth, setUserData }) => {
   
                 setAuth(true);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
                 setAuth(false);
             }
         } catch (error) {

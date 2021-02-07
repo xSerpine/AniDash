@@ -59,7 +59,7 @@ const AnimeInfo = ({ guest }) => {
                 type: 'anime'
             };
 
-            const response = await fetch(`${APIUrl}/favorites/progress`,
+            const res = await fetch(`${APIUrl}/favorites/progress`,
                 {
                     method: 'PUT',
                     headers: {
@@ -70,16 +70,16 @@ const AnimeInfo = ({ guest }) => {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
     
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.info(`Anime set as ${selectedOption} sucessfully!`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -105,7 +105,7 @@ const AnimeInfo = ({ guest }) => {
                 synopsis: anime.synopsis ? anime.synopsis : 'N/A'
             };
 
-            const response = await fetch(`${APIUrl}/favorites/anime`,
+            const res = await fetch(`${APIUrl}/favorites/anime`,
                 {
                     method: 'POST',
                     headers: {
@@ -116,16 +116,16 @@ const AnimeInfo = ({ guest }) => {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
 
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.info(`${anime.title} added to your list!`, { position: 'bottom-right' });
                 updateNow && setUpdate(!update);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -134,7 +134,7 @@ const AnimeInfo = ({ guest }) => {
 
     const handleRemoveFavorite = async() => {
         try {
-            const response = await fetch(`${APIUrl}/favorites/${user.id}/${id_anime}/anime`,
+            const res = await fetch(`${APIUrl}/favorites/${user.id}/${id_anime}/anime`,
                 {
                     method: 'DELETE',
                     headers: {
@@ -144,16 +144,16 @@ const AnimeInfo = ({ guest }) => {
                 }
             );
 
-            if(response.status === 401) {
+            if(res.status === 401) {
                 localStorage.clear();
                 window.location.reload();
             }
             
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.info(`${anime.title} removed from your list!`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);

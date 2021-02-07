@@ -23,7 +23,7 @@ const ConfirmationPage = () => {
             const body = {
                 token: token
             }
-            const response = await fetch(`${APIUrl}/users/confirm`,
+            const res = await fetch(`${APIUrl}/users/confirm`,
                 {
                     method: 'PUT',
                     headers: {
@@ -33,10 +33,10 @@ const ConfirmationPage = () => {
                 }
             );
 
-            if (response.status === 200) {
+            if (res.status === 200) {
                 setConfirmed(true);
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
 
             setLoading(false);

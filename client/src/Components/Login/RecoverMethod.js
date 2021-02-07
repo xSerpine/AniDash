@@ -26,7 +26,7 @@ const RecoverMethod = () => {
             const body = {
                 email: email
             }
-            const response = await fetch(`${APIUrl}/users/recover`,
+            const res = await fetch(`${APIUrl}/users/recover`,
                 {
                     method: 'POST',
                     headers: {
@@ -36,11 +36,11 @@ const RecoverMethod = () => {
                 }
             );
 
-            if (response.status === 200) {
+            if (res.status === 200) {
                 toast.success('An email has been sent to help you recover your password!', { position: 'bottom-right' });
                 setEmail('');
             } else {
-                toast.error(await response.text(), { position: 'bottom-right' });
+                toast.error(await res.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.log(error);
