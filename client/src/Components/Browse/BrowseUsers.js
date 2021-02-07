@@ -62,7 +62,7 @@ const BrowseUsers = () => {
                 <input type='text' id='search' placeholder='Look up any user' onKeyDown={e => handleEnter(e)} autoComplete='off' />  
                 <label htmlFor='search'>
                     <span>
-                        <i class='fas fa-search'></i> Look up any user
+                        <i className='fas fa-search'></i> Look up any user
                     </span>
                 </label>
             </InputWrapper>

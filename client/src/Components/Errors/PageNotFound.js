@@ -4,6 +4,7 @@ import { Message } from '../Styled Components/content';
 import { FullPageWrapper } from '../Styled Components/form';
 
 const PageNotFound = () => {
+    document.title = '404 • AniDash'
     return (
         <FullPageWrapper other>
             <Message>

@@ -6,6 +6,7 @@ const GenericContentTracking = ({
     status,
     current,
     total,
+    handleEnter,
     handleCount
 }) => {
     return (
@@ -27,7 +28,7 @@ const GenericContentTracking = ({
                     <span className='add' onClick={() => handleCount('add', current)}><i className='fas fa-chevron-up'></i></span>
                     <span className='remove' onClick={() => handleCount('remove', current)}><i className='fas fa-chevron-down'></i></span>
                     <b>{type === 'anime' ? 'Episodes Watched' : 'Chapters Watched'}</b>
-                    <p>{current}</p>
+                    <p><input type='text' defaultValue={current} onKeyDown={e => handleEnter(e)} /></p>
                 </div>
             }
         </Tracking>

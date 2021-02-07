@@ -52,6 +52,17 @@ const Tracking = styled.div`
     display: flex;
     justify-content: space-evenly;
     background: #1c2541;
+    & input {
+        width: 45px;
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        color: #FFF05A;
+        text-align: center;
+        border-bottom: 2px solid;
+        outline: none;
+        line-height: 25px;
+    }
     & div {
         position: relative;
         width: 100%;
@@ -80,6 +91,9 @@ const Tracking = styled.div`
     }
     @media (max-width: 768px) {
         flex-flow: column;
+        & .add, & .remove {
+            right: 30%;
+        }
         & div {
             padding: 1rem 0;
         }

@@ -14,13 +14,22 @@ const MangaTracking = ({ id_manga, user, total }) => {
     const [loading, setLoading] = useState(true);
     const [favorite, setFavorite] = useState([]);
 
+    const handleEnter = e => {
+        if(e.keyCode === 13)  {
+            if(!e.target.value) return;
+            if(!isNaN(e.target.value)) handleCount('custom', parseInt(e.target.value));
+        }
+    }
+
     const handleCount = async(action, currentCount) => {
         let isCompleted = false;
 
+        if(action === 'custom' && currentCount.toString().length > 4) return;
+
         if(!isNaN(total)) {
-            if(action === 'add' && currentCount + 1 > parseInt(total)) return toast.error(`Can't add more chapters.`, { position: 'bottom-right' });
-            if(action === 'add' && currentCount + 1 === parseInt(total)) isCompleted = true;
-            if(action === 'remove' && currentCount - 1 < 0) return toast.error(`Can't remove more chapters.`, { position: 'bottom-right' });
+            if((action === 'add' && currentCount + 1 > parseInt(total)) || (action === 'custom' && currentCount > parseInt(total))) return toast.error("Can't add more chapters.", { position: 'bottom-right' });
+            if((action === 'add' && currentCount + 1 === parseInt(total)) || (action === 'custom' && currentCount === parseInt(total))) isCompleted = true;
+            if((action === 'remove' && currentCount - 1 < 0) || (action === 'custom' && currentCount < 0)) return toast.error("Can't remove more chapters.", { position: 'bottom-right' });
         }
 
         try {
@@ -86,6 +95,7 @@ const MangaTracking = ({ id_manga, user, total }) => {
             status={favorite.progress}
             current={favorite.read}
             total={total}
+            handleEnter={handleEnter}
             handleCount={handleCount}
         />
     );

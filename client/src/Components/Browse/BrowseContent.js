@@ -27,7 +27,7 @@ const BrowseContent = ({ guest }) => {
                 <input type='text' id='search' placeholder='Look up any anime or manga' onKeyDown={e => handleEnter(e)} autoComplete='off' />  
                 <label htmlFor='search'>
                     <span>
-                        <i class='fas fa-search'></i> Look up any anime or manga
+                        <i className='fas fa-search'></i> Look up any anime or manga
                     </span>
                 </label>
             </InputWrapper>

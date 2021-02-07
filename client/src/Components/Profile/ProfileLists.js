@@ -27,7 +27,7 @@ function ProfileLists({ user, type, typeStyles, profile, item1, item2, item3, em
             type === 'profile' ?
                 `${APIUrl}/follows/${user.username}?page=${currentPage}`
                 :
-                `${APIUrl}/favorites/${user.id}/${type}?page=${currentPage}`
+                `${APIUrl}/favorites/${user._id}/${type}?page=${currentPage}`
             );
         const ContentArray = await res.json();
         
