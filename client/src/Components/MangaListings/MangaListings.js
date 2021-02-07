@@ -40,7 +40,7 @@ function Mangalistings({ guest }) {
                     {!guest &&
                         <ItemsWrapper ref={element => itemRef.current.push(element)}>
                             <span onClick={() => handleClickOptions(0)}>My Manga Lists</span>
-                            <div style={{borderLeft: '2px solid'}} className='teste'>
+                            <div style={{borderLeft: '2px solid'}}>
                                 {['All', 'Planning', 'Reading', 'Completed', 'Dropped'].map((option, index) => 
                                     <Items suboption onClick={() => handleChoice(option)} key={index}>{option}</Items>
                                 )}

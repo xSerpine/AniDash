@@ -48,7 +48,7 @@ function Animelistings({ guest }) {
                     {!guest &&
                         <ItemsWrapper ref={element => itemRef.current.push(element)}>
                             <span onClick={() => handleClickOptions(0)}>My Anime Lists</span>
-                            <div style={{borderLeft: '2px solid'}} className='teste'>
+                            <div style={{borderLeft: '2px solid'}}>
                                 {['All', 'Planning', 'Watching', 'Completed', 'Dropped'].map((option, index) => 
                                     <Items suboption onClick={() => handleChoice(option)} key={index}>{option}</Items>
                                 )}

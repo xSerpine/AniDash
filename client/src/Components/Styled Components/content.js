@@ -568,8 +568,8 @@ const Items = styled.div`
     cursor: pointer;
     background: #1c2541;
     color: #000;
-    width: 85%;
-    margin-left: 15%;
+    width: 95%;
+    margin-left: 5%;
     text-align: center;
     padding: 0.5rem 1rem;
     border-radius: 5px;
