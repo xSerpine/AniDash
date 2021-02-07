@@ -50,27 +50,31 @@ function UserProfile() {
     const handleAddFollow = async() => {
         try {
             const body = { 
-                id_user: profile._id, 
-                followerEmail: user.email, 
+                id: profile._id, 
+                id_follower: user.id, 
             };
 
-            const response = await fetch(`${APIUrl}/follow`,
+            const response = await fetch(`${APIUrl}/follows`,
                 {
                     method: 'POST',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     },
                     body: JSON.stringify(body)
                 }
             );
+
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
     
-            const parseRes = await response.json();
-    
-            if (parseRes === 'OK') {
+            if (response.status === 200) {
                 toast.success(`You're now following ${profile.username}`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -80,27 +84,31 @@ function UserProfile() {
     const handleRemoveFollow = async() => {
         try {
             const body = { 
-                id_user: profile._id, 
-                followerEmail: user.email,  
+                id: profile._id, 
+                id_follower: user.id,  
             };
 
-            const response = await fetch(`${APIUrl}/follow`,
+            const response = await fetch(`${APIUrl}/follows`,
                 {
                     method: 'DELETE',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     },
                     body: JSON.stringify(body)
                 }
             );
+
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
     
-            const parseRes = await response.json();
-    
-            if (parseRes === 'OK') {
+            if (response.status === 200) {
                 toast.success(`You stopped following ${profile.username}`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -108,15 +116,14 @@ function UserProfile() {
     }
 
     const checkIfFollow = async() => {
-        const res = await fetch(`${APIUrl}/follow/${username}/${user.email}`);
+        const res = await fetch(`${APIUrl}/follows/${username}/${user.id}`);
         const parseRes = await res.json();
-        if(parseRes) setIsFollow(true);
-        else setIsFollow(false);
+        setIsFollow(parseRes);
     }
 
     const getProfile = async() => {
         const res = await fetch(`${APIUrl}/users/${username}`);
-        if(!res.ok) return history.push('/404');
+        if(res.status === 404) return history.push('/404');
         const ProfileArray = await res.json();
         setProfile(ProfileArray);
     }
@@ -174,10 +181,10 @@ function UserProfile() {
                 title={`${username}'s Profile`}
                 followState={
                     username !== user.username ? 
-                        isFollow ? 
-                            <i onClick={() => handleAddFollow()} className='far fa-heart'></i> 
-                            : 
+                        isFollow ?  
                             <i onClick={() => handleRemoveFollow()} className='fas fa-heart'></i> 
+                            :
+                            <i onClick={() => handleAddFollow()} className='far fa-heart'></i>
                         : 
                         ''
                     }

@@ -38,7 +38,7 @@ const FavoriteAnimeList = ({ list }) => {
     const handleUpdateItem = async() => {
         if(!favorites[updatedItem.arrayIndex]) return;
 
-        const res = await fetch(`${APIUrl}/favoritos/favorite/${user.email}/${updatedItem.contentId}/anime`);
+        const res = await fetch(`${APIUrl}/favorites/favorite/${user.id}/${updatedItem.contentId}/anime`);
         const UpdatedFavorite = await res.json();
 
         const favoritesCopy = [...favorites];
@@ -58,27 +58,31 @@ const FavoriteAnimeList = ({ list }) => {
             const body = { 
                 count: currentCount + 1,
                 completed: isCompleted,
-                email: user.email,
-                id: id,
+                id: user.id,
+                id_content: id,
                 type: 'anime'
             };
 
-            const response = await fetch(`${APIUrl}/favoritos/counter`,
+            const response = await fetch(`${APIUrl}/favorites/counter`,
                 {
                     method: 'PUT',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     },
                     body: JSON.stringify(body)
                 }
             );
-    
-            const parseRes = await response.json();
 
-            if (parseRes === 'OK') {
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
+
+            if (response.status === 200) {
                 setUpdatedItem({ arrayIndex: arrayIndex, contentId: id});
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -88,9 +92,9 @@ const FavoriteAnimeList = ({ list }) => {
     const getFavorites = async() => {
         const res = await fetch(
             list === 'all' ?
-                `${APIUrl}/favoritos/${user.email}/anime?page=${currentPage}`
+                `${APIUrl}/favorites/${user.id}/anime?page=${currentPage}`
                 :
-                `${APIUrl}/favoritos/progress/${user.email}/anime/${list}?page=${currentPage}`  
+                `${APIUrl}/favorites/progress/${user.id}/anime/${list}?page=${currentPage}`  
         );
         const FavoritesArray = await res.json();
 

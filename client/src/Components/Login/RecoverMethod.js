@@ -35,14 +35,12 @@ const RecoverMethod = () => {
                     body: JSON.stringify(body)
                 }
             );
-    
-            const parseRes = await response.json();
 
-            if (parseRes === 'OK') {
+            if (response.status === 200) {
                 toast.success('An email has been sent to help you recover your password!', { position: 'bottom-right' });
                 setEmail('');
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.log(error);

@@ -65,26 +65,31 @@ const AiringAnime = ({ guest }) => {
             const body = { 
                 count: currentCount + 1,
                 completed: isCompleted,
-                email: user.email,
-                id: id,
+                id: user.id,
+                id_content: id,
                 type: 'anime'
             };
 
-            const response = await fetch(`${APIUrl}/favoritos/counter`,
+            const response = await fetch(`${APIUrl}/favorites/counter`,
                 {
                     method: 'PUT',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     },
                     body: JSON.stringify(body)
                 }
             );
-    
-            const parseRes = await response.json();
-            if (parseRes === 'OK') {
+
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
+
+            if (response.status === 200) {
                 setUpdate(!update);
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -94,7 +99,7 @@ const AiringAnime = ({ guest }) => {
     const getFavoriteAnime = async() => {
         if(guest) return;
 
-        const res = await fetch(`${APIUrl}/favoritos/${user.email}/anime`);
+        const res = await fetch(`${APIUrl}/favorites/${user.id}/anime`);
         const FavoritesArray = await res.json();
 
         setResultsFavorites(FavoritesArray);

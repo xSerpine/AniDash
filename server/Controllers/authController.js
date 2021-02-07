@@ -1,6 +1,6 @@
 const pool = require('../db');
 const bcrypt = require('bcrypt');
-const GeradorTokens = require('../Utils/GeradorTokens');
+const TokensGenerator = require('../Utils/TokensGenerator');
 
 module.exports = {
     postLogin : async function(req, res){
@@ -12,16 +12,14 @@ module.exports = {
             if(user.includes('@')) users = await pool.query('SELECT * FROM users WHERE email = $1', [user.trim()]);  
             else users = await pool.query('SELECT * FROM users WHERE username = $1', [user.trim()]); 
 
-            const userInfo = users.rows[0];
-
-            if (users.rows.length === 0) return res.status(401).json('Invalid credencials.');
-            if(!users.rows[0].verified) return res.status(403).json('Please confirm your email.')
+            if (users.rows.length === 0) return res.status(401).send('Invalid credencials.');
+            if(!users.rows[0].verified) return res.status(403).send('Please confirm your email.')
 
             const validPassword = await bcrypt.compare(password, users.rows[0].password);
-            if(!validPassword) return res.status(401).json('Invalid password.');
+            if(!validPassword) return res.status(401).send('Invalid password.');
 
-            const jwtToken = GeradorTokens(users.rows[0].email);
-            return res.json({ jwtToken, userInfo });
+            const jwtToken = TokensGenerator(users.rows[0]._id);
+            res.json({ jwtToken, userInfo: users.rows[0] });
         } catch (error) {
             console.log(error);
             res.status(500).send('Ocorreu um erro no servidor.');

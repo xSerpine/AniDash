@@ -45,10 +45,8 @@ const RecoverPassword = () => {
                     body: JSON.stringify(body)
                 }
             );
-    
-            const parseRes = await response.json();
 
-            if (parseRes === 'OK') {
+            if (response.status === 200) {
                 toast.success('Password has been updated! You can now login.', { position: 'bottom-right' });
                 setInputs({
                     password: '',
@@ -56,7 +54,7 @@ const RecoverPassword = () => {
                 });
                 setRecovered(true);
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.log(error);

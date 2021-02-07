@@ -58,9 +58,7 @@ const RegisterUser = () => {
                 }
             );
 
-            const parseRes = await response.json();
-
-            if(parseRes === 'OK') {
+            if(response.status === 200) {
                 toast.success('Account created! Please confirm your email.', { position: 'bottom-right' });
                 setAvatar('');
                 setInputs({
@@ -71,7 +69,7 @@ const RegisterUser = () => {
                 });
             }
             else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);

@@ -18,26 +18,24 @@ const transporter = nodemailer.createTransport({
 
 module.exports = {
     postRegister : async function(req, res){
-        let usernameExists, emailExists;
-
         try { 
             const { username, email, password, avatar } = req.body;
 
             const user = await pool.query('SELECT username, email FROM users');
 
-            usernameExists = user.rows.some(user => (user.username === username));
-            emailExists = user.rows.some(user => (user.email === email));
+            const usernameExists = user.rows.some(user => user.username === username);
+            const emailExists = user.rows.some(user => user.email === email);
             
-            if(usernameExists && emailExists) return res.json('Both username and email are taken.')
-            if(usernameExists) return res.json('Username is already taken.');
-            if(emailExists) return res.json('Email is already registered.')
+            if(usernameExists && emailExists) return res.status(409).send('Both username and email are taken.')
+            if(usernameExists) return res.status(409).send('Username is already taken.');
+            if(emailExists) return res.status(409).send('Email is already registered.')
 
             const salt = await bcrypt.genSalt(10);
             const bcryptPassword = await bcrypt.hash(password, salt);
 
             const uploadedResponse = avatar != '' && await cloudinary.uploader.upload(avatar, {
                 upload_preset: 'dmpknj3w'
-            }).catch(error => console.error(error));
+            });
 
             const emailToken = cryptoRandomString({length: 16, type: 'url-safe'});
 
@@ -68,7 +66,7 @@ module.exports = {
             };
 
             transporter.sendMail(mailOptions, error => {
-                if (error) return res.json('An error as occurred. Please try again later.');
+                if (error) return res.status(500).send('An error as occurred. Please try again later.');
             });
 
             await pool.query(
@@ -76,7 +74,7 @@ module.exports = {
                 [username, email, bcryptPassword, avatar == '' ? avatar : uploadedResponse.secure_url, false, emailToken]
             );
     
-            return res.json('OK');
+            res.status(200).send('OK');
         } catch (error) {
             console.error(error);
             res.status(500).send('Ocorreu um erro no servidor.');
@@ -89,7 +87,7 @@ module.exports = {
         
             const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);  
 
-            if(user.rows.length === 0) return res.status(404).json("Couldn't find an account using this email.");
+            if(user.rows.length === 0) return res.status(404).send("Couldn't find an account using this email.");
                 
             const recoverToken = cryptoRandomString({length: 16, type: 'url-safe'});
 
@@ -118,7 +116,7 @@ module.exports = {
             };
 
             transporter.sendMail(mailOptions, error => {
-                if (error) return res.json('An error as occurred. Please try again later.');
+                if (error) return res.status(500).send('An error as occurred. Please try again later.');
             });
 
             await pool.query(
@@ -126,7 +124,7 @@ module.exports = {
                 [recoverToken, user.rows[0].email]
             );
 
-            res.json('OK');
+            res.status(200).send('OK');
         } catch (error) {
             console.error(error);
             res.status(500).send('Ocorreu um erro no servidor.');
@@ -139,14 +137,14 @@ module.exports = {
         
             const user = await pool.query('SELECT * FROM users WHERE token = $1', [token]);  
 
-            if(user.rows.length === 0) return res.status(404).json("Couldn't confirm your account.");
+            if(user.rows.length === 0) return res.status(404).send("Couldn't confirm your account.");
                 
             await pool.query(
                 'UPDATE users SET verified = $1, token = $2 WHERE email = $3',
                 [true, null, user.rows[0].email]
             );
   
-            res.json('OK');
+            res.status(200).send('OK');
         } catch (error) {
             console.error(error);
             res.status(500).send('Ocorreu um erro no servidor.');
@@ -159,7 +157,7 @@ module.exports = {
         
             const user = await pool.query('SELECT * FROM users WHERE token = $1', [token]);  
 
-            if(user.rows.length === 0) return res.status(404).json("Couldn't update your password.");
+            if(user.rows.length === 0) return res.status(404).send("Couldn't update your password.");
 
             const salt = await bcrypt.genSalt(10);
             const bcryptPassword = await bcrypt.hash(password, salt);
@@ -169,27 +167,63 @@ module.exports = {
                 [null, bcryptPassword, user.rows[0].email]
             );
   
-            res.json('OK');
+            res.status(200).send('OK');
         } catch (error) {
             console.error(error);
             res.status(500).send('Ocorreu um erro no servidor.');
         }
     },
 
-    putAvatar : async function(req, res){
+    putProfile : async function(req, res){
+        let uploadedResponse, bcryptPassword;
+
         try { 
-            const { email, avatar } = req.body;
+            const { id, username, email, password, avatar, sfw } = req.body;
+
+            const user =  await pool.query('SELECT * FROM users WHERE _id = $1', [id]); 
+            const users = await pool.query('SELECT username, email FROM users'); 
+
+            if(!username && !email && !password && !avatar && sfw == null) return res.status(304).send('Not Modified');
+
+            if(username) {
+                const checkUsername = users.rows.some(user => (user.username).toLowerCase() === username.toLowerCase()); 
+                if(checkUsername) return res.status(409).end('Username already taken.'); 
+
+                await pool.query(`
+                    UPDATE activity 
+                    SET username = $1
+                    WHERE id_user = $2
+                `, [username, id])
+            }
+
+            if(email) {
+                const checkEmail = users.rows.some(user => user.email === email); 
+                if(checkEmail) return res.status(409).send('Email already taken.'); 
+            }
+
+            if(avatar) {
+                uploadedResponse = await cloudinary.uploader.upload(avatar, {
+                    upload_preset: 'dmpknj3w'
+                });
+            }
             
-            const uploadedResponse = await cloudinary.uploader.upload(avatar, {
-                upload_preset: 'dmpknj3w'
-            });
+            if(password) {
+                const salt = await bcrypt.genSalt(10);
+                bcryptPassword = await bcrypt.hash(password, salt);
+            }
                 
-            await pool.query(
-                'UPDATE users SET avatar = $1 WHERE email = $2',
-                [uploadedResponse.secure_url, email]
-            );
+            const profile = await pool.query(`
+                UPDATE users SET
+                username = '${username ? username : user.rows[0].username}',
+                email = '${email ? email : user.rows[0].email}',
+                password = '${password ? bcryptPassword : user.rows[0].password}',
+                avatar = '${avatar ? uploadedResponse.secure_url : user.rows[0].avatar}',
+                sfw = ${sfw != null ? sfw : user.rows[0].sfw}
+                WHERE _id = $1
+                RETURNING *
+            `, [id]);
   
-            res.json('OK');
+            res.json(profile.rows[0]);
         } catch (error) {
             console.error(error);
             res.status(500).send('Ocorreu um erro no servidor.');
@@ -197,19 +231,14 @@ module.exports = {
     },
 
     getUser : async function(req, res){
-        let users;
-
         try{
-            const { user } = req.params;
+            const { username } = req.params;
 
-            if(user.includes('@'))
-                users = await pool.query('SELECT * FROM users WHERE email = $1', [user]);  
-            else 
-                users = await pool.query('SELECT * FROM users WHERE username = $1', [user]); 
+            const user = await pool.query('SELECT _id, username, avatar FROM users WHERE username = $1', [username]);  
 
-            if(users.rows.length === 0) res.status(404);
+            if(user.rows.length === 0) return res.status(404).send("Couldn't find user.");
 
-            res.json(users.rows[0]);
+            res.json(user.rows[0]);
         } catch (error) {
             console.error(error);
             res.status(500).send('Ocorreu um erro no servidor.');
@@ -222,7 +251,7 @@ module.exports = {
             const page = req.query.page;
 
             const users = await pool.query(`
-                SELECT lower(username) as username, email, avatar FROM users 
+                SELECT lower(username) as username, avatar FROM users 
                 WHERE username LIKE '%${query}%'
                 LIMIT 50 OFFSET (${page} - 1) * 50
             `); 
@@ -235,51 +264,51 @@ module.exports = {
     },
 
     getStats : async function(req, res){
-        let users;
-
         try{
-            const { user } = req.params;
+            const { username } = req.params;
 
-            if(user.includes('@')) users = await pool.query('SELECT * FROM users WHERE email = $1', [user]);  
-            else users = await pool.query('SELECT * FROM users WHERE username = $1', [user]);
+            const user = await pool.query(`
+                SELECT _id FROM users WHERE username = $1
+            `, [username]);
 
             const animeCount = await pool.query(`
                 SELECT COUNT(*) FROM animefavorites 
                 WHERE id_user = $1
-            `, [users.rows[0]._id]);
+            `, [user.rows[0]._id]);
 
             const mangaCount = await pool.query(`
                 SELECT COUNT(*) FROM mangafavorites 
                 WHERE id_user = $1
-            `, [users.rows[0]._id]);
+            `, [user.rows[0]._id]);
 
             const followersCount = await pool.query(`
                 SELECT COUNT(*) FROM follows 
                 WHERE id_user = $1
-            `, [users.rows[0]._id]); 
+            `, [user.rows[0]._id]); 
 
             const followingCount = await pool.query(`
                 SELECT COUNT(*) FROM follows 
                 WHERE id_follower = $1
-            `, [users.rows[0]._id]); 
+            `, [user.rows[0]._id]); 
 
             const showsCount = await pool.query(`
                 SELECT SUM(watched) FROM animefavorites 
                 WHERE id_user = $1 AND (type_anime = 'TV' OR type_anime = 'ONA')
-            `, [users.rows[0]._id]);
+            `, [user.rows[0]._id]);
 
             const moviesCount = await pool.query(`
                 SELECT SUM(watched) FROM animefavorites 
                 WHERE id_user = $1 AND type_anime = 'Movie'
-            `, [users.rows[0]._id]);
+            `, [user.rows[0]._id]);
 
             const chaptersCount = await pool.query(`
                 SELECT SUM(read) FROM mangafavorites 
                 WHERE id_user = $1
-            `, [users.rows[0]._id]);
+            `, [user.rows[0]._id]);
 
-            const timeSpent = 23 * parseInt(showsCount.rows[0].sum) + 90 * parseInt(moviesCount.rows[0].sum);
-            const episodesCount = parseInt(showsCount.rows[0].sum) + parseInt(moviesCount.rows[0].sum);
+
+            const timeSpent = 23 * parseInt(showsCount.rows[0].sum ? showsCount.rows[0].sum : 0) + 90 * parseInt(moviesCount.rows[0].sum ? moviesCount.rows[0].sum : 0);
+            const episodesCount = parseInt(showsCount.rows[0].sum ? showsCount.rows[0].sum : 0) + parseInt(moviesCount.rows[0].sum ? moviesCount.rows[0].sum : 0);
 
             res.json({ 
                 anime: animeCount.rows[0].count, 

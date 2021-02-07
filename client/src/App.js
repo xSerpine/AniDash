@@ -21,6 +21,7 @@ import PageNotFound from './Components/Errors/PageNotFound';
 import ConfirmationPage from './Components/Sign Up/ConfirmationPage';
 import RecoverMethod from './Components/Login/RecoverMethod';
 import RecoverPassword from './Components/Login/RecoverPassword';
+import UserSettings from './Components/Profile/Settings';
 
 const APIUrl = 'https://anidash-api.herokuapp.com';
 
@@ -30,15 +31,18 @@ const App = () => {
 
 	const [isAuthenticated, setIsAuthenticated] = useState(token ? true : false);
 	const [user, setUser] = useState({
+		id: data ? JSON.parse(data).id : '',
 		username: data ? JSON.parse(data).username : '',
 		email:  data ? JSON.parse(data).email : '',
 		avatar:  data ? JSON.parse(data).avatar : '',
-		SFW: data ? JSON.parse(data).sfw : ''
+		SFW: data ? JSON.parse(data).SFW : ''
 	})
 
 	const checkAuthenticated = async () => {
+		if(!user.id) return;
+
 		try {
-			const res = await fetch(`${APIUrl}/autenticar/verificar`, {
+			const res = await fetch(`${APIUrl}/auth/verify`, {
 				headers: {
 					Authorization: localStorage.getItem('jwtToken')
 				}
@@ -46,7 +50,7 @@ const App = () => {
 
 			const parseRes = await res.json();
 
-			setIsAuthenticated(parseRes);
+			setIsAuthenticated(parseRes ? true : false);
 		} catch (error) {
 			console.error(error);
 		}
@@ -55,14 +59,16 @@ const App = () => {
 	useEffect(() => {		
 		checkAuthenticated();
 
+		// eslint-disable-next-line
 	}, []);
 
 	const setAuth = (boolean) => {
 		setIsAuthenticated(boolean);
 	};
 
-	const setUserData = (username, email, avatar, sfw) => {
+	const setUserData = (id, username, email, avatar, sfw) => {
 		setUser({
+			id: id,
 			username: username,
 			email: email,
 			avatar: avatar,
@@ -90,7 +96,7 @@ const App = () => {
 					<Route exact path='/manga/:id_manga' render={props => isAuthenticated ? <Manga {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
 					<Route exact path='/profile/:username' render={props => isAuthenticated ? <Profile {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
 					<Route exact path='/activity' render={props => isAuthenticated ? <Activity {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
-					<Route exact path='/settings' render={props => isAuthenticated ? <Settings {...props} logout={handleLogout} /> : <Redirect to='/' />}></Route>
+					<Route exact path='/settings' render={props => isAuthenticated ? <Settings {...props} setUserData={setUserData} logout={handleLogout} /> : <Redirect to='/' />}></Route>
 					
 					<Route exact path='/guest' render={props => <Home {...props} guest={true} logout={handleLogout} />}></Route>
 					<Route exact path='/guest/search' render={props => <Browse {...props} guest={true} logout={handleLogout} />}></Route>
@@ -330,7 +336,7 @@ const Profile = ({ logout }) => {
 	);
 }
 
-const Activity = ({ logout }) => {
+const Activity = ({ logout,  }) => {
 	const [open, setOpen] = useState(false);
 
 	const handleToggle = () => {
@@ -358,7 +364,7 @@ const Activity = ({ logout }) => {
 	);
 }
 
-const Settings = ({ logout }) => {
+const Settings = ({ setUserData, logout }) => {
 	const [open, setOpen] = useState(false);
 
 	const handleToggle = () => {
@@ -377,7 +383,7 @@ const Settings = ({ logout }) => {
 			<NavBar handleToggle={handleToggle} logout={logout} />
 			<SideBar estado={open} logout={logout} />
 			{backdrop}
-			<h1 style={{color: '#fff', textAlign: 'center'}}>Settings are yet to be implemented.</h1>
+			<UserSettings setUserData={setUserData} />
 			<SpacingElement footer />
 			<Footer>
 				Made by	<a target='_blank' rel='noopener noreferrer' href='https://github.com/xSerpine'>Luís Ferro.</a>

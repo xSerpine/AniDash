@@ -3,16 +3,16 @@ const pool = require('../db');
 module.exports = {
     postActivity : async function(req, res){
         try {
-            const { username, status } = req.body;
+            const { id, status } = req.body;
 
-            const user = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+            const user = await pool.query('SELECT * FROM users WHERE _id = $1', [id]);
 
             await pool.query(
                 'INSERT INTO activity (id_user, username, type_content, action, content) VALUES ($1,$2,$3,$4,$5)', 
-                [user.rows[0]._id, username, 'comentario', 'comment', status]
+                [id, user.rows[0].username, 'comentario', 'comment', status]
             )
             
-            return res.json('OK')
+            res.status(200).send('OK');
         } catch (error) {
             console.log(error);
             res.status(500).send('Ocorreu um erro no servidor.');
@@ -23,11 +23,10 @@ module.exports = {
         let followingUserIDs = [], followingActivityIDs = [];
 
         try {
-            const { username } = req.params;
+            const { id } = req.params;
             const page = req.query.page;
 
-            const user = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-            const userFollowing = await pool.query('SELECT * FROM follows WHERE id_follower = $1', [user.rows[0]._id]);
+            const userFollowing = await pool.query('SELECT * FROM follows WHERE id_follower = $1', [id]);
 
             if(userFollowing.rows.length === 0) {
                 const userPosts = await pool.query(`
@@ -35,19 +34,19 @@ module.exports = {
                     WHERE id_user = $1 AND action = 'comment'
                     ORDER BY hour DESC
                     LIMIT 20 OFFSET (${page} - 1) * 20
-                `, [user.rows[0]._id]);
+                `, [id]);
                 return res.json(userPosts.rows);    
             }
 
             if(userFollowing.rows.length > 0) {
-                userFollowing.rows.map(userFol => (
-                    followingUserIDs.push(userFol.id_user)
+                userFollowing.rows.map(user => (
+                    followingUserIDs.push(`'${user.id_user}'`)
                 ));
     
                 const users = await pool.query(`SELECT * FROM activity WHERE id_user IN (${followingUserIDs.join(',')})`);
                 if(users.rows.length > 0) {
-                    users.rows.map(userFol => (
-                        followingActivityIDs.push(userFol.id_user)
+                    users.rows.map(user => (
+                        followingActivityIDs.push(`'${user.id_user}'`)
                     ));
 
                     const activity = await pool.query(`
@@ -58,7 +57,7 @@ module.exports = {
                         WHERE id_user = $1 AND action = 'comment'
                         ORDER BY hour DESC
                         LIMIT 20 OFFSET (${page} - 1) * 20
-                    `, [user.rows[0]._id]);
+                    `, [id]);
 
                     return res.json(activity.rows);
                 }
@@ -69,7 +68,7 @@ module.exports = {
                 WHERE id_user = $1 AND action = 'comment'
                 ORDER BY hour DESC
                 LIMIT 20 OFFSET (${page} - 1) * 20
-            `, [user.rows[0]._id]);
+            `, [id]);
             
             return res.json(userPosts.rows); 
         } catch (error) {

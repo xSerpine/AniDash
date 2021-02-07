@@ -41,13 +41,10 @@ const UserActivity = () => {
     }, [loading, hasMore])
 
     const getActivity = async() => {
-        const res = await fetch(`${APIUrl}/activity/${user.username}?page=${currentPage}`);
-        const ActivityArray = await res.json();
-        
+        const response = await fetch(`${APIUrl}/activity/${user.id}?page=${currentPage}`);
+        const ActivityArray = await response.json();
         ActivityArray.length === 0 ? setHasMore(false) : setHasMore(true);
-        
         setActivity(activity.concat(ActivityArray));
-
         setLoading(false);
     }
 
@@ -58,34 +55,38 @@ const UserActivity = () => {
     }, [update, currentPage])
 
     const addStatus = async() => {
-        const username = user.username;
-        const status = value;
-
-        if(10 >= status.length || status.length >= 250) return toast.error('Status must have between 10 and 250 characters.', { position: 'bottom-right' });
+        if(10 >= value.length || value.length >= 250) return toast.error('Status must have between 10 and 250 characters.', { position: 'bottom-right' });
 
         try {
-            const body = { username, status };
+            const body = { 
+                id: user.id, 
+                status: value
+            };
             const response = await fetch(`${APIUrl}/activity`,
                 {
                     method: 'POST',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     },
                     body: JSON.stringify(body)
                 }
             );
 
-            const parseRes = await response.json();
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
 
-            if(parseRes === 'OK') {
-                setValue('');
+            if(response.status === 200) {
                 toast.success('Status added with success!', { position: 'bottom-right' });
+                setValue('');
                 setCurrentPage(1);
                 setActivity([]);
                 setUpdate(!update);
             }
             else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -115,7 +116,7 @@ const UserActivity = () => {
                                 {activityItem.action === 'comment' && (
                                     user.username === activityItem.username ?
                                         <SubTitulo>
-                                            <Link to={'/profile'}>You</Link> posted:
+                                            <Link to={`/profile/${activityItem.username}`}>You</Link> posted:
                                             <br/>
                                             {activityItem.content}
                                         </SubTitulo>

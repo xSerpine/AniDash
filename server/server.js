@@ -19,10 +19,10 @@ app.get('/', function(req, res) {
 		'Cliente': 'https://anidashapi.netlify.app/'
 	})
 })
-app.use('/autenticar', require('./Routes/autenticacaoRoute'));
+app.use('/auth', require('./Routes/authRoute'));
 app.use('/users', require('./Routes/usersRoute'));
-app.use('/follow', require('./Routes/followRoute'));
-app.use('/favoritos', require('./Routes/favoritosRoute'));
+app.use('/follows', require('./Routes/followsRoute'));
+app.use('/favorites', require('./Routes/favoritesRoute'));
 app.use('/activity', require('./Routes/activityRoute'));
 
 //----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -30,6 +30,15 @@ function MangaInfo({ guest }) {
  
     const { id_manga } = useParams();
 
+    const itemRef = useRef();
+
+    const handleClick = () => {
+        if(itemRef.current.classList.contains('active')) 
+            itemRef.current.classList.remove('active');
+        else 
+            itemRef.current.classList.add('active');
+    }
+
     const handleAnchor = () => {
         setChoice('Overview');    
         setLoading(true);
@@ -45,28 +54,32 @@ function MangaInfo({ guest }) {
         try {
             const body = { 
                 progress: selectedOption,
-                email: user.email,
-                id: id_manga,
+                id: user.id,
+                id_content: id_manga,
                 type: 'manga'
             };
 
-            const response = await fetch(`${APIUrl}/favoritos/progress`,
+            const response = await fetch(`${APIUrl}/favorites/progress`,
                 {
                     method: 'PUT',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     },
                     body: JSON.stringify(body)
                 }
             );
+
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
     
-            const parseRes = await response.json();
-    
-            if (parseRes === 'OK') {
+            if (response.status === 200) {
                 toast.info(`Manga set as ${selectedOption} sucessfully!`, { position: 'bottom-right' });
                 setUpdate(!update);
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -78,7 +91,7 @@ function MangaInfo({ guest }) {
         
         try {
             const body = { 
-                email: user.email, 
+                id: user.id, 
                 id_manga: manga.mal_id, 
                 type_manga: manga.type ? manga.type : 'N/A', 
                 name: manga.title, 
@@ -91,23 +104,27 @@ function MangaInfo({ guest }) {
                 synopsis: manga.synopsis ? manga.synopsis : 'N/A'
             };
 
-            const response = await fetch(`${APIUrl}/favoritos/manga`,
+            const response = await fetch(`${APIUrl}/favorites/manga`,
                 {
                     method: 'POST',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     },
                     body: JSON.stringify(body)
                 }
             );
+
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
     
-            const parseRes = await response.json();
-    
-            if (parseRes === 'OK') {
+            if (response.status === 200) {
                 toast.info(`${manga.title} added to your list!`, { position: 'bottom-right' });
                 updateNow && setUpdate(!update);
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -116,21 +133,27 @@ function MangaInfo({ guest }) {
 
     const handleRemoveFavorite = async() => {
         try {
-            const response = await fetch(`${APIUrl}/favoritos/${user.email}/${id_manga}/manga`,
+            const response = await fetch(`${APIUrl}/favorites/${user.id}/${id_manga}/manga`,
                 {
                     method: 'DELETE',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     }
                 }
             );
+
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
     
-            const parseRes = await response.json();
-    
-            if (parseRes === 'OK') {
+            if (response.status === 200) {
                 toast.info(`${manga.title} removed from your list!`, { position: 'bottom-right' });
                 setUpdate(!update);
-            } 
+            } else {
+                toast.error(await response.text(), { position: 'bottom-right' });
+            }
         } catch (error) {
             console.error(error);
         }
@@ -139,12 +162,11 @@ function MangaInfo({ guest }) {
     const checkIfFavorite = async() => {
         if(guest) return;
 
-        const res = await fetch(`${APIUrl}/favoritos/${user.email}/${id_manga}/manga`);
+        const res = await fetch(`${APIUrl}/favorites/${user.id}/${id_manga}/manga`);
         const parseRes = await res.json();
-        if(parseRes) setIsFavorite(true);
-        else setIsFavorite(false);
+        setIsFavorite(parseRes);
 
-        const resMangaFavorites = await fetch(`${APIUrl}/favoritos/${user.email}/manga`);
+        const resMangaFavorites = await fetch(`${APIUrl}/favorites/${user.id}/manga`);
         const MangaFavoritesArray = await resMangaFavorites.json();
         const filteredMangaFavoritesArray = [...MangaFavoritesArray].filter(manga => manga.id_manga === parseInt(id_manga));
         setProgress(filteredMangaFavoritesArray.length > 0 ? filteredMangaFavoritesArray[0].progress : 'Add to list');
@@ -205,6 +227,8 @@ function MangaInfo({ guest }) {
                 handleAddFavorite={handleAddFavorite}
                 handleRemoveFavorite={handleRemoveFavorite}
                 handleSelectedOption={handleSelectedOption}
+                handleClick={handleClick}
+                itemRef={itemRef}
             />
             <br/>
             <ContentInfoBar>

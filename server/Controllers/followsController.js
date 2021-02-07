@@ -3,18 +3,14 @@ const pool = require('../db');
 module.exports = {
     postFollow : async function(req, res){
         try { 
-            const { id_user, followerEmail } = req.body;
-
-            const user = await pool.query(
-                'SELECT * FROM users WHERE email = $1', [followerEmail]
-            )
+            const { id, id_follower } = req.body;
                 
             await pool.query(
                 'INSERT INTO follows (id_user, id_follower) VALUES ($1,$2)',
-                [id_user, user.rows[0]._id]
+                [id, id_follower]
             );
   
-            res.json('OK');
+            res.status(200).send('OK');
         } catch (error) {
             console.error(error);
             res.status(500).send('Ocorreu um erro no servidor.');
@@ -28,15 +24,17 @@ module.exports = {
             const { username } = req.params;
             const page = req.query.page;
 
-            const user = await pool.query('SELECT _id FROM users WHERE username = $1', [username]);
+            const user = await pool.query(`
+                SELECT _id FROM users WHERE username = $1
+            `, [username]);
                
             const userFollowing = await pool.query(`
                 SELECT id_user FROM follows 
                 WHERE id_follower = $1
             `, [user.rows[0]._id]);
             if(userFollowing.rows.length > 0) {
-                userFollowing.rows.map(userFol => (
-                    followingIDs.push(userFol.id_user)
+                userFollowing.rows.map(user => (
+                    followingIDs.push(`'${user.id_user}'`)
                 ));
 
                 const followingList = await pool.query(`
@@ -53,8 +51,8 @@ module.exports = {
                 WHERE id_user = $1
             `, [user.rows[0]._id]);
             if(userFollowers.rows.length > 0) {
-                userFollowers.rows.map(userFol => (
-                    followersIDs.push(userFol.id_follower)
+                userFollowers.rows.map(user => (
+                    followersIDs.push(`'${user.id_follower}'`)
                 ));
 
                 const followersList = await pool.query(`
@@ -73,23 +71,17 @@ module.exports = {
         }
     },
 
-    VerificarFollow : async function(req, res){
+    checkFollow : async function(req, res){
         try{
-            const { username, email_follower } = req.params;
+            const { username, id_follower } = req.params;
 
-            const user = await pool.query(
-                'select * from users where username = $1', [username]
-            );
-
-            const user_follower = await pool.query(
-                'select * from users where email = $1', [email_follower]
-            );
+            const user = await pool.query('SELECT _id FROM users WHERE username = $1', [username]);
 
             const follow_dup = await pool.query(
-                'select * from follows where id_user = $1 and id_follower = $2', [user.rows[0]._id, user_follower.rows[0]._id]
+                'SELECT * FROM follows WHERE id_user = $1 AND id_follower = $2', [user.rows[0]._id, id_follower]
             );
 
-            if(follow_dup.rows.length == 0) return res.json(true);
+            if(follow_dup.rows.length > 0) return res.json(true);
       
             res.json(false);
         } catch (error) {
@@ -100,17 +92,13 @@ module.exports = {
 
     deleteFollow : async function(req, res){
         try{
-            const { id_user, followerEmail } = req.body;
-
-            const user = await pool.query(
-                'SELECT * FROM users WHERE email = $1', [followerEmail]
-            )
+            const { id, id_follower } = req.body;
 
             await pool.query(
-                'DELETE FROM follows WHERE id_user = $1 AND id_follower = $2', [id_user, user.rows[0]._id]
+                'DELETE FROM follows WHERE id_user = $1 AND id_follower = $2', [id, id_follower]
             );
 
-            res.json('OK');
+            res.status(200).send('OK');
         } catch (error) {
             console.error(error);
             res.status(500).send('Ocorreu um erro no servidor.');

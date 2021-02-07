@@ -28,7 +28,7 @@ const LoginUser = ({ setAuth, setUserData }) => {
         e.preventDefault();
         try {
             const body = { user, password };
-            const response = await fetch(`${APIUrl}/autenticar/login`,
+            const response = await fetch(`${APIUrl}/auth/login`,
                 {
                     method: 'POST',
                     headers: {
@@ -37,23 +37,24 @@ const LoginUser = ({ setAuth, setUserData }) => {
                     body: JSON.stringify(body)
                 }
             );
-
-            const parseRes = await response.json();
     
-            if (parseRes.jwtToken) {
+            if (response.status === 200) {
+                const parseRes = await response.json();
+                
                 toast.success(`Welcome to AniDash, ${parseRes.userInfo.username}!`, { position: 'bottom-right' });
                 localStorage.setItem('jwtToken', parseRes.jwtToken);
                 localStorage.setItem('user', JSON.stringify({
+                    id: parseRes.userInfo._id,
                     username: parseRes.userInfo.username,
                     email: parseRes.userInfo.email,
                     avatar: parseRes.userInfo.avatar,
                     SFW: parseRes.userInfo.sfw
                 }))
-                setUserData(parseRes.userInfo.username, parseRes.userInfo.email, parseRes.userInfo.avatar, parseRes.userInfo.sfw);
+                setUserData(parseRes.userInfo._id, parseRes.userInfo.username, parseRes.userInfo.email, parseRes.userInfo.avatar, parseRes.userInfo.sfw);
   
                 setAuth(true);
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
                 setAuth(false);
             }
         } catch (error) {

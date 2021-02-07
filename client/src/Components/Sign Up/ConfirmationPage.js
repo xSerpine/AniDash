@@ -32,13 +32,11 @@ const ConfirmationPage = () => {
                     body: JSON.stringify(body)
                 }
             );
-    
-            const parseRes = await response.json();
 
-            if (parseRes === 'OK') {
+            if (response.status === 200) {
                 setConfirmed(true);
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
 
             setLoading(false);

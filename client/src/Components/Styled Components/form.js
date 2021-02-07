@@ -36,6 +36,12 @@ const FormWrapper = styled.div`
 const Form = styled.form`
     width: 80%;
     margin: 0 auto;
+    ${props => props.settings && css`
+        width: 400px;
+        @media (max-width: 768px) {
+            width: 80%;
+        }
+    `}
 `;
 
 const InputWrapper = styled.div`
@@ -112,6 +118,44 @@ const InputWrapper = styled.div`
             font-family: PT Sans Narrow; 
         }
     }
+    ${props => props.checkbox && css`
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        & input {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            border: none;
+            border-radius: 25px;
+            background: #e01e37;
+            -webkit-appearance: none;
+            transition: 0.5s;
+            cursor: pointer;
+        }
+        & input:checked {
+            background: #38b000;
+        }
+        & input::before {
+            position: absolute;
+            top: 0;
+            left: 0;
+            content: '';
+            width: 30px;
+            height: 30px;
+            background: #fff;
+            border-radius: 25px;
+            box-shadow: 0 2px 5px #000;
+            transition: 0.5s;
+        }
+        & input:checked::before {
+            left: 30px;
+        }
+        & label {
+            position: relative;
+            color: #fff;
+        }
+    `}
 `;
 
 const InfoWrapper = styled.div`

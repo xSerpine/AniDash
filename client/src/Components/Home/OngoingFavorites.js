@@ -46,7 +46,7 @@ const OngoingFavorites = ({ type }) => {
     const handleUpdateItem = async() => {
         if(!resultsFavorites[updatedItem.arrayIndex]) return;
 
-        const res = await fetch(`${APIUrl}/favoritos/favorite/${user.email}/${updatedItem.contentId}/${type}`);
+        const res = await fetch(`${APIUrl}/favorites/favorite/${user.id}/${updatedItem.contentId}/${type}`);
         const UpdatedFavorite = await res.json();
 
         const favoritesCopy = [...resultsFavorites];
@@ -66,27 +66,31 @@ const OngoingFavorites = ({ type }) => {
             const body = { 
                 count: currentCount + 1,
                 completed: isCompleted,
-                email: user.email,
-                id: id,
+                id: user.id,
+                id_content: id,
                 type: type
             };
 
-            const response = await fetch(`${APIUrl}/favoritos/counter`,
+            const response = await fetch(`${APIUrl}/favorites/counter`,
                 {
                     method: 'PUT',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     },
                     body: JSON.stringify(body)
                 }
             );
-    
-            const parseRes = await response.json();
 
-            if (parseRes === 'OK') {
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
+
+            if (response.status === 200) {
                 setUpdatedItem({ arrayIndex: arrayIndex, contentId: id});
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -102,7 +106,7 @@ const OngoingFavorites = ({ type }) => {
     }
 
 	const getOngoingFavorites = async() => {
-		const res = await fetch(`${APIUrl}/favoritos/ongoing/${user.email}/${type}?page=${currentPage}`);
+		const res = await fetch(`${APIUrl}/favorites/ongoing/${user.id}/${type}?page=${currentPage}`);
 		const OngoingFavoriteArray = await res.json();
 
         OngoingFavoriteArray.length === 0 ? setHasMore(false) : setHasMore(true);

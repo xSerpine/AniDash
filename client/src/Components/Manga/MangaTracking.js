@@ -27,27 +27,31 @@ const MangaTracking = ({ id_manga, user, total }) => {
             const body = { 
                 count: action === 'add' ? currentCount + 1 : currentCount - 1,
                 completed: isCompleted,
-                email: user.email,
-                id: id_manga,
+                id: user.id,
+                id_content: id_manga,
                 type: 'manga'
             };
 
-            const response = await fetch(`${APIUrl}/favoritos/counter`,
+            const response = await fetch(`${APIUrl}/favorites/counter`,
                 {
                     method: 'PUT',
                     headers: {
-                        'Content-type': 'application/json'
+                        'Content-type': 'application/json',
+                        'Authorization': localStorage.getItem('jwtToken')
                     },
                     body: JSON.stringify(body)
                 }
             );
-    
-            const parseRes = await response.json();
 
-            if (parseRes === 'OK') {
+            if(response.status === 401) {
+                localStorage.clear();
+                window.location.reload();
+            }
+
+            if (response.status === 200) {
                 setUpdate(!update);
             } else {
-                toast.error(parseRes, { position: 'bottom-right' });
+                toast.error(await response.text(), { position: 'bottom-right' });
             }
         } catch (error) {
             console.error(error);
@@ -55,7 +59,7 @@ const MangaTracking = ({ id_manga, user, total }) => {
     }
 
     const getFavorite = async() => {
-        const res = await fetch(`${APIUrl}/favoritos/favorite/${user.email}/${id_manga}/manga`);
+        const res = await fetch(`${APIUrl}/favorites/favorite/${user.id}/${id_manga}/manga`);
         const FavoriteArray = await res.json();
 
         setFavorite(FavoriteArray);
