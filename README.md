@@ -7,6 +7,7 @@ Uses the Jikan API for the anime/manga data.
 ## Some of the features:
    - Look up any anime or manga
    - Add anime or manga to a list such as Planning, Watching/Reading, Completed and Dropped
+   - Keep track of episodes or chapters of your favorite anime/manga
    - Check which anime is airing today or tomorrow
    - Countdown timer for the next episode of an airing anime
    - Follow system where you can share your activity or thoughts with your followers
