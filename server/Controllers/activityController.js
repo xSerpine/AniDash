@@ -1,7 +1,7 @@
 const pool = require('../db');
 
 module.exports = {
-    postActivity : async function(req, res){
+    postActivity : async(req, res) => {
         try {
             const { id, status } = req.body;
 
@@ -19,7 +19,7 @@ module.exports = {
         }
     },
 
-    getActivity : async function(req, res){
+    getActivity : async(req, res) => {
         let followingUserIDs = [], followingActivityIDs = [];
 
         try {

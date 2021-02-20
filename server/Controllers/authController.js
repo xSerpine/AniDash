@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const TokensGenerator = require('../Utils/TokensGenerator');
 
 module.exports = {
-    postLogin : async function(req, res){
+    postLogin : async(req, res) => {
         let users;
 
         try {
@@ -26,12 +26,7 @@ module.exports = {
         }
     },
 
-    getVerificar : async function(req, res){
-        try {
-            res.json(true);
-        } catch (error) {
-            console.error(error);
-            res.status(500).send('Ocorreu um erro no servidor.');
-        }
+    getVerificar : (req, res) => {
+        res.json(true);
     }    
 }

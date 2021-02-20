@@ -10,7 +10,7 @@ app.use(express.json({ limit: '50mb', extended: true }));
 
 //----------------------------------------------------------------------
 
-app.get('/', function(req, res) {
+app.get('/', (req, res) => {
 	res.json({
 		'Autor': 'Luís Ferro',
 		'Github': 'https://github.com/xSerpine',

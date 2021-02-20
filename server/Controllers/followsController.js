@@ -1,7 +1,7 @@
 const pool = require('../db');
 
 module.exports = {
-    postFollow : async function(req, res){
+    postFollow : async(req, res) => {
         try { 
             const { id, id_follower } = req.body;
                 
@@ -17,7 +17,7 @@ module.exports = {
         }
     },
 
-    getFollows : async function(req, res){
+    getFollows : async(req, res) => {
         let followersIDs = [], followingIDs = [], followers, following;
         
         try { 
@@ -71,8 +71,8 @@ module.exports = {
         }
     },
 
-    checkFollow : async function(req, res){
-        try{
+    checkFollow : async(req, res) => {
+        try {
             const { username, id_follower } = req.params;
 
             const user = await pool.query('SELECT _id FROM users WHERE username = $1', [username]);
@@ -90,8 +90,8 @@ module.exports = {
         }
     },
 
-    deleteFollow : async function(req, res){
-        try{
+    deleteFollow : async(req, res) => {
+        try {
             const { id, id_follower } = req.body;
 
             await pool.query(

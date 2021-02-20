@@ -8,8 +8,8 @@ router.route('/recover').post(usersController.postRecoverMethod);
 router.route('/confirm').put(usersController.putVerifiedUser);
 router.route('/recover').put(usersController.putPasswordUser);
 router.route('/profile').put(auth, usersController.putProfile);
-router.route('/:username').get(usersController.getUser);
-router.route('/search/:query').get(usersController.getUsers);
-router.route('/stats/:username').get(usersController.getStats);
+router.route('/:username').get(auth, usersController.getUser);
+router.route('/search/:query').get(auth, usersController.getUsers);
+router.route('/stats/:username').get(auth, usersController.getStats);
 
 module.exports = router;

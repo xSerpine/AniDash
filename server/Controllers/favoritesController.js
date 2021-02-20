@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 const pool = require('../db');
 
 module.exports = {
-    postFavoriteAnime : async function(req, res){
+    postFavoriteAnime : async(req, res) => {
         try { 
             const { id, id_anime, type_anime, name, image, episodes, status, airing_start, broadcast, score, url, synopsis } = req.body;
 
@@ -25,7 +25,7 @@ module.exports = {
         }
     },
 
-    postFavoriteManga : async function(req, res){
+    postFavoriteManga : async(req, res) => {
         try { 
             const { id, id_manga, type_manga, name, image, chapters, volumes, status, score, url, synopsis } = req.body;
 
@@ -48,7 +48,7 @@ module.exports = {
         }
     },
 
-    getFavorite : async function(req, res){
+    getFavorite : async(req, res) => {
         try{
             const { id, id_content, type } = req.params;
 
@@ -57,6 +57,8 @@ module.exports = {
                 WHERE id_user = $1 AND id_${type} = $2
             `, [id, id_content]);
 
+            if(favoritos.rows.length === 0) return res.status(404).send(`Couldn't find ${type}.`);
+
             res.json(favoritos.rows[0]);
         } catch (error) {
             console.error(error);
@@ -64,7 +66,7 @@ module.exports = {
         }
     },
 
-    getFavorites : async function(req, res){
+    getFavorites : async(req, res) => {
         try{
             const { id, type } = req.params;
             const page = req.query.page;
@@ -83,7 +85,7 @@ module.exports = {
         }
     },
 
-    getFavoritesOnGoing : async function(req, res){
+    getFavoritesOnGoing : async(req, res) => {
         try{
             const { id, type } = req.params;
             const page = req.query.page;
@@ -106,7 +108,7 @@ module.exports = {
         }
     },
 
-    getFavoritesFinished : async function(req, res){
+    getFavoritesFinished : async(req, res) => {
         let status;
 
         try{
@@ -130,7 +132,7 @@ module.exports = {
         }
     },
 
-    getFavoritesProgress : async function(req, res){
+    getFavoritesProgress : async(req, res) => {
         try{
             const { progress, id, type } = req.params;
             const page = req.query.page;
@@ -149,7 +151,7 @@ module.exports = {
         }
     },
 
-    checkFavorites : async function(req, res){
+    checkFavorites : async(req, res) => {
         try{
             const { id, id_content, type } = req.params;
 
@@ -173,7 +175,7 @@ module.exports = {
         }
     },
 
-    putFavoritosEpisodesChapters : async function(req, res){
+    putFavoritosEpisodesChapters : async(req, res) => {
         try{
             const { count, completed, id, id_content, type } = req.body;
 
@@ -201,7 +203,7 @@ module.exports = {
         }
     },
 
-    putFavoritosProgress : async function(req, res){
+    putFavoritosProgress : async(req, res) => {
         try{
             const { progress, id, id_content, type } = req.body;
 
@@ -232,7 +234,7 @@ module.exports = {
         }
     },
 
-    deleteFavorite : async function(req, res){
+    deleteFavorite : async(req, res) => {
         try{
             const { id, id_content, type } = req.params;
 

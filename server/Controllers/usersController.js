@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 });
 
 module.exports = {
-    postRegister : async function(req, res){
+    postRegister : async(req, res) => {
         try { 
             const { username, email, password, avatar } = req.body;
 
@@ -65,9 +65,7 @@ module.exports = {
                 `
             };
 
-            transporter.sendMail(mailOptions, error => {
-                if (error) return res.status(500).send('An error as occurred. Please try again later.');
-            });
+            transporter.sendMail(mailOptions);
 
             await pool.query(
                 'INSERT INTO users (username, email, password, avatar, verified, token) VALUES ($1,$2,$3,$4,$5,$6)',
@@ -81,7 +79,7 @@ module.exports = {
         }
     },
 
-    postRecoverMethod : async function(req, res){
+    postRecoverMethod : async(req, res) => {
         try { 
             const { email } = req.body;
         
@@ -115,9 +113,7 @@ module.exports = {
                 `
             };
 
-            transporter.sendMail(mailOptions, error => {
-                if (error) return res.status(500).send('An error as occurred. Please try again later.');
-            });
+            transporter.sendMail(mailOptions);
 
             await pool.query(
                 'UPDATE users SET token = $1 WHERE email = $2',
@@ -131,7 +127,7 @@ module.exports = {
         }
     },
 
-    putVerifiedUser : async function(req, res){
+    putVerifiedUser : async(req, res) => {
         try { 
             const { token } = req.body;
         
@@ -151,7 +147,7 @@ module.exports = {
         }
     },
 
-    putPasswordUser : async function(req, res){
+    putPasswordUser : async(req, res) => {
         try { 
             const { token, password } = req.body;
         
@@ -174,7 +170,7 @@ module.exports = {
         }
     },
 
-    putProfile : async function(req, res){
+    putProfile : async(req, res) => {
         let uploadedResponse, bcryptPassword;
 
         try { 
@@ -230,8 +226,8 @@ module.exports = {
         }
     },
 
-    getUser : async function(req, res){
-        try{
+    getUser : async(req, res) => {
+        try {
             const { username } = req.params;
 
             const user = await pool.query('SELECT _id, username, avatar FROM users WHERE username = $1', [username]);  
@@ -245,14 +241,14 @@ module.exports = {
         }
     },
 
-    getUsers : async function(req, res){
-        try{
+    getUsers : async(req, res) => {
+        try {
             const { query } = req.params;
             const page = req.query.page;
 
             const users = await pool.query(`
-                SELECT lower(username) as username, avatar FROM users 
-                WHERE username LIKE '%${query}%'
+                SELECT username, avatar FROM users 
+                WHERE lower(username) LIKE '%${query}%'
                 LIMIT 50 OFFSET (${page} - 1) * 50
             `); 
 
@@ -263,8 +259,8 @@ module.exports = {
         }
     },
 
-    getStats : async function(req, res){
-        try{
+    getStats : async(req, res) => {
+        try {
             const { username } = req.params;
 
             const user = await pool.query(`
