@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { TextWrapper } from '../Styled Components/content';
+import { TextWrapper } from '../Components/Styled Components/content';
 
-function ReadMoreReadLess({text}) {
+const ReadMoreReadLess = ({ text }) => {
     const [isTruncated, setIsTruncated] = useState(false);
 
     const handleReadMore = () => {

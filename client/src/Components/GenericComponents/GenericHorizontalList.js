@@ -4,7 +4,7 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { ImageOverlay, Airing, AddItem, AiringControls, AiringWrapper, NoContent } from '../Styled Components/content';
 import { Spinner } from '../Styled Components/loader';
 import { SubTitulo } from '../Styled Components/text';
-import Countdown from '../Utils/useCountdown';
+import Countdown from '../../Utils/Countdown';
 
 const GenericHorizontalList = ({ 
     guest,

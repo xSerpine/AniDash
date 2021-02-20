@@ -6,12 +6,13 @@ import UserContext from '../../Context/UserContext';
 import { Titulo } from '../Styled Components/text';
 import { Form, IMGPreview, InfoWrapper, InputWrapper } from '../Styled Components/form';
 import { Btn } from '../Styled Components/btn';
+import { API } from '../../Hooks/API';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-function UserSettings({ setUserData }) {
+const Settings = ({ setUserData }) => {
     const user = useContext(UserContext);
 
     document.title = 'Settings • AniDash';
@@ -31,15 +32,9 @@ function UserSettings({ setUserData }) {
         setInputs({ ...inputs, [e.target.name]: e.target.type === 'checkbox' ? !e.target.checked : e.target.value });
     }
 
-    const handleFile = async e => {
-        const file = e.target.files[0];
-       
-        previewFile(file);
-    }
-
-    const previewFile = file => {
+    const handleFile = async e => {       
         const reader = new FileReader();
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(e.target.files[0]);
         reader.onloadend = () => {
             setAvatar(reader.result)
         }
@@ -49,51 +44,37 @@ function UserSettings({ setUserData }) {
         e.preventDefault();
 
         if(username === user.username && email === user.email && !password && avatar.includes('https://res.cloudinary.com') && sfw === user.SFW) return;
-
         if(password !== Cpassword) return toast.error('Passwords do not match.', { position: 'bottom-right' });
 
-        try {
-            const body = { 
-                id: user.id,
-                username: username !== user.username ? username : null, 
-                email: email !== user.email ? email : null, 
-                password, 
-                avatar: !avatar.includes('https://res.cloudinary.com') ? avatar : null,
-                sfw: sfw !== user.SFW ? sfw : null
-            };
-            const res = await fetch(`${APIUrl}/users/profile`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const body = { 
+            id: user.id,
+            username: username !== user.username ? username : null, 
+            email: email !== user.email ? email : null, 
+            password, 
+            avatar: !avatar.includes('https://res.cloudinary.com') ? avatar : null,
+            sfw: sfw !== user.SFW ? sfw : null
+        };
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
+        const { status, statusMessage, data } = await API('PUT', `${APIUrl}/users/profile`, null, body);
 
-            if(res.status === 200) {
-                const parseRes = await res.json();
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
 
-                toast.success('Your settings have been updated!', { position: 'bottom-right' });
-                localStorage.setItem('user', JSON.stringify({
-                    username: parseRes.username,
-                    email: parseRes.email,
-                    avatar: parseRes.avatar,
-                    SFW: parseRes.sfw
-                }))
-                setUserData(parseRes.username, parseRes.email, parseRes.avatar, parseRes.sfw);
-            }
-            else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 200) {
+            toast.success('Your settings have been updated!', { position: 'bottom-right' });
+            localStorage.setItem('user', JSON.stringify({
+                id: data._id,
+                username: data.username,
+                email: data.email,
+                avatar: data.avatar,
+                SFW: data.sfw
+            }));
+            setUserData(data._id, data.username, data.email, data.avatar, data.sfw);
+        }
+        else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
@@ -135,4 +116,4 @@ function UserSettings({ setUserData }) {
     );
 }
 
-export default UserSettings;
+export default Settings;

@@ -12,12 +12,13 @@ import MangaRecommendations from './MangaRecommendations';
 import MangaCharacters from './MangaCharacters';
 import MangaStats from './MangaStats';
 import MangaTracking from './MangaTracking';
+import { API } from '../../Hooks/API';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-function MangaInfo({ guest }) {
+const Manga = ({ guest }) => {
     const user = useContext(UserContext);
     const history = useHistory();
 
@@ -51,146 +52,108 @@ function MangaInfo({ guest }) {
     const handleSelectedOption = async(selectedOption) => {
         if(selectedOption) handleAddFavorite(false);
 
-        try {
-            const body = { 
-                progress: selectedOption,
-                id: user.id,
-                id_content: id_manga,
-                type: 'manga'
-            };
+        const body = { 
+            progress: selectedOption,
+            id: user.id,
+            id_content: id_manga,
+            type: 'manga'
+        };
 
-            const res = await fetch(`${APIUrl}/favorites/progress`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const { status, statusMessage } = await API('PUT', `${APIUrl}/favorites/progress`, null, body);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
-    
-            if (res.status === 200) {
-                toast.info(`Manga set as ${selectedOption} sucessfully!`, { position: 'bottom-right' });
-                setUpdate(!update);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        if(status === 200) {
+            toast.info(`Manga set as ${selectedOption} sucessfully!`, { position: 'bottom-right' });
+            setUpdate(!update);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
     const handleAddFavorite = async(updateNow) => {
         if(isFavorite) return;
         
-        try {
-            const body = { 
-                id: user.id, 
-                id_manga: manga.mal_id, 
-                type_manga: manga.type ? manga.type : 'N/A', 
-                name: manga.title, 
-                image: manga.image_url, 
-                chapters: manga.chapters ? manga.chapters : 'N/A', 
-                volumes: manga.volumes ? manga.volumes : 'N/A', 
-                status: manga.status ? manga.status : 'N/A', 
-                score: manga.score ? manga.score : 'N/A', 
-                url: manga.url, 
-                synopsis: manga.synopsis ? manga.synopsis : 'N/A'
-            };
+        const body = { 
+            id: user.id, 
+            id_manga: manga.mal_id, 
+            type_manga: manga.type ? manga.type : 'N/A', 
+            name: manga.title, 
+            image: manga.image_url, 
+            chapters: manga.chapters ? manga.chapters : 'N/A', 
+            volumes: manga.volumes ? manga.volumes : 'N/A', 
+            status: manga.status ? manga.status : 'N/A', 
+            score: manga.score ? manga.score : 'N/A', 
+            url: manga.url, 
+            synopsis: manga.synopsis ? manga.synopsis : 'N/A'
+        };
 
-            const res = await fetch(`${APIUrl}/favorites/manga`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const { status, statusMessage } = await API('POST', `${APIUrl}/favorites/manga`, null, body);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
-    
-            if (res.status === 200) {
-                toast.info(`${manga.title} added to your list!`, { position: 'bottom-right' });
-                updateNow && setUpdate(!update);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        if(status === 200) {
+            toast.info(`${manga.title} added to your list!`, { position: 'bottom-right' });
+            updateNow && setUpdate(!update);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
     const handleRemoveFavorite = async() => {
-        try {
-            const res = await fetch(`${APIUrl}/favorites/${user.id}/${id_manga}/manga`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    }
-                }
-            );
+        const { status, statusMessage } = await API('DELETE', `${APIUrl}/favorites/${user.id}/${id_manga}/manga`);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
-    
-            if (res.status === 200) {
-                toast.info(`${manga.title} removed from your list!`, { position: 'bottom-right' });
-                setUpdate(!update);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        if(status === 200) {
+            toast.info(`${manga.title} removed from your list!`, { position: 'bottom-right' });
+            setUpdate(!update);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
     const checkIfFavorite = async() => {
         if(guest) return;
+        const { data } = await API('GET', `${APIUrl}/favorites/${user.id}/${id_manga}/manga`, true);
+        setIsFavorite(data);
+    }
 
-        const res = await fetch(`${APIUrl}/favorites/${user.id}/${id_manga}/manga`);
-        const parseRes = await res.json();
-        setIsFavorite(parseRes);
-
-        const resMangaFavorites = await fetch(`${APIUrl}/favorites/${user.id}/manga`);
-        const MangaFavoritesArray = await resMangaFavorites.json();
-        const filteredMangaFavoritesArray = [...MangaFavoritesArray].filter(manga => manga.id_manga === parseInt(id_manga));
-        setProgress(filteredMangaFavoritesArray.length > 0 ? filteredMangaFavoritesArray[0].progress : 'Add to list');
+    const getMangaFavorite = async() => {
+        if(guest) return;
+        const { data } = await API('GET', `${APIUrl}/favorites/favorite/${user.id}/${id_manga}/manga`, true);
+        setProgress(data ? data.progress : 'Add to list');
     }
 
     const getManga = async() => {
-        const res = await fetch(`https://api.jikan.moe/v3/manga/${id_manga}`);
-        if(!res.ok) return history.push('/404');
-        const MangaArray = await res.json();
-        setManga(MangaArray);
+        const { status, data } = await API('GET', `https://api.jikan.moe/v3/manga/${id_manga}`);
+        if(status === 404) return history.push('/404');
+        setManga(data);
 
-        document.title = `${MangaArray.title} • AniDash`;
+        document.title = `${data.title} • AniDash`;
     }
 
     useEffect(() => {
         checkIfFavorite();
+        getMangaFavorite();
 
         // eslint-disable-next-line
     }, [update])
 
     useEffect(() => {
         window.scrollTo(0, 0);
-        checkIfFavorite();
         getManga();
+        checkIfFavorite();
+        getMangaFavorite();
         const loadingTime = setTimeout(() => {
             setLoading(false);
         }, 1000);
@@ -260,4 +223,4 @@ function MangaInfo({ guest }) {
     );
 }
 
-export default MangaInfo;
+export default Manga;

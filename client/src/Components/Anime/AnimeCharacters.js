@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API } from '../../Hooks/API';
 import GenericContentCharacters from '../GenericComponents/GenericContentCharacters';
 import { Spinner } from '../Styled Components/loader';
 import { SpacingElement } from '../Styled Components/navbar';
@@ -8,11 +9,8 @@ const AnimeCharacters = ({ id_anime }) => {
     const [characters, setCharacters] = useState([]);
 
     const getCharacters = async() => {
-        const res = await fetch(`https://api.jikan.moe/v3/anime/${id_anime}/characters_staff`);
-        const CharactersArray = await res.json();
-
-        setCharacters(CharactersArray.characters.slice(0, CharactersArray.characters.length > 50 ? 50 : CharactersArray.characters.length));
-        
+        const { data } = await API('GET', `https://api.jikan.moe/v3/anime/${id_anime}/characters_staff`);
+        setCharacters(data.characters.slice(0, data.characters.length > 50 ? 50 : data.characters.length));
         setLoading(false);
     }
 

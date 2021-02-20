@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import ReactPlayer from 'react-player';
 import { ContentInfo } from '../Styled Components/content';
 import { SubTitulo } from '../Styled Components/text';
-import Countdown from '../Utils/useCountdown';
+import Countdown from '../../Utils/Countdown';
 
 const GenericContentOverview = ({
     subtitle,

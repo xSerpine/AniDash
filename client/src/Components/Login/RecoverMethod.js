@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { API } from '../../Hooks/API';
 import { Btn } from '../Styled Components/btn';
 import { Form, FormWrapper, FullPageWrapper, InfoWrapper, InputWrapper } from '../Styled Components/form';
 import { Titulo } from '../Styled Components/text';
@@ -22,28 +23,17 @@ const RecoverMethod = () => {
     const onSubmitForm = async e => {
         e.preventDefault();
 
-        try {
-            const body = {
-                email: email
-            }
-            const res = await fetch(`${APIUrl}/users/recover`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const body = {
+            email: email
+        }
 
-            if (res.status === 200) {
-                toast.success('An email has been sent to help you recover your password!', { position: 'bottom-right' });
-                setEmail('');
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.log(error);
+        const { status, statusMessage } = API('POST', `${APIUrl}/users/recover`, null, body);
+
+        if (status === 200) {
+            toast.success('An email has been sent to help you recover your password!', { position: 'bottom-right' });
+            setEmail('');
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 

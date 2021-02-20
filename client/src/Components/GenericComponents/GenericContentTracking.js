@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tracking } from '../Styled Components/content';
 
 const GenericContentTracking = ({
@@ -9,6 +9,22 @@ const GenericContentTracking = ({
     handleEnter,
     handleCount
 }) => {
+    const [value, setValue] = useState('');
+
+    const handleInputValue = () => {
+        setValue(current);
+    }
+
+    const onChange = e => {
+        setValue(e.target.value);
+    }
+
+    useEffect(() => {
+        handleInputValue();
+
+        // eslint-disable-next-line
+    }, [current])
+
     return (
         <Tracking>
             {status &&
@@ -28,7 +44,7 @@ const GenericContentTracking = ({
                     <span className='add' onClick={() => handleCount('add', current)}><i className='fas fa-chevron-up'></i></span>
                     <span className='remove' onClick={() => handleCount('remove', current)}><i className='fas fa-chevron-down'></i></span>
                     <b>{type === 'anime' ? 'Episodes Watched' : 'Chapters Watched'}</b>
-                    <p><input type='text' defaultValue={current} onKeyDown={e => handleEnter(e)} /></p>
+                    <p><input type='text' value={value} onChange={e => onChange(e)} onKeyDown={e => handleEnter(e)} /></p>
                 </div>
             }
         </Tracking>

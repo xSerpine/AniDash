@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { Spinner } from '../Styled Components/loader';
 import GenericContentList from '../GenericComponents/GenericContentList';
 import UserContext from '../../Context/UserContext';
+import { API } from '../../Hooks/API';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
@@ -38,11 +39,9 @@ const FavoriteMangaList = ({ list }) => {
     const handleUpdateItem = async() => {
         if(!favorites[updatedItem.arrayIndex]) return;
 
-        const res = await fetch(`${APIUrl}/favorites/favorite/${user.id}/${updatedItem.contentId}/manga`);
-        const UpdatedFavorite = await res.json();
-
+        const { data } = await API('GET', `${APIUrl}/favorites/favorite/${user.id}/${updatedItem.contentId}/manga`, true);
         const favoritesCopy = [...favorites];
-        favoritesCopy[updatedItem.arrayIndex] = UpdatedFavorite;
+        favoritesCopy[updatedItem.arrayIndex] = data;
         setFavorites(favoritesCopy);
     }
 
@@ -54,54 +53,39 @@ const FavoriteMangaList = ({ list }) => {
             if(currentCount + 1 === parseInt(totalCount)) isCompleted = true;
         }
 
-        try {
-            const body = { 
-                count: currentCount + 1,
-                completed: isCompleted,
-                id: user.id,
-                id_content: id,
-                type: 'manga'
-            };
+        const body = { 
+            count: currentCount + 1,
+            completed: isCompleted,
+            id: user.id,
+            id_content: id,
+            type: 'manga'
+        };
 
-            const res = await fetch(`${APIUrl}/favorites/counter`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const { status, statusMessage } = await API('PUT', `${APIUrl}/favorites/counter`, null, body);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
 
-            if (res.status === 200) {
-                setUpdatedItem({ arrayIndex: arrayIndex, contentId: id});
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 200) {
+            setUpdatedItem({ arrayIndex: arrayIndex, contentId: id});
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
     const getFavorites = async() => {
-        const res = await fetch(
+        const { data } = await API(
+            'GET', 
             list === 'all' ?
                 `${APIUrl}/favorites/${user.id}/manga?page=${currentPage}`
                 :
-                `${APIUrl}/favorites/progress/${user.id}/manga/${list}?page=${currentPage}`  
+                `${APIUrl}/favorites/progress/${user.id}/manga/${list}?page=${currentPage}`, 
+            true
         );
-        const FavoritesArray = await res.json();
-
-        FavoritesArray.length === 0 ? setHasMore(false) : setHasMore(true);
-
-        setFavorites(favorites.concat(FavoritesArray));
-
+        data.length === 0 ? setHasMore(false) : setHasMore(true);
+        setFavorites(favorites.concat(data));
         setLoading(false);
     }
 

@@ -11,10 +11,10 @@ const date = new Date();
 const year = date.getFullYear();
 const month = date.getMonth() + 1;
 
-function Animelistings({ guest }) {
-    const user = useContext(UserContext);
-
+const AnimeListings = ({ guest }) => {
     document.title = 'Anime Lists • AniDash';
+    
+    const user = useContext(UserContext);
     
     const [key, setKey] = useState(0);
     const [choice, setChoice] = useState(guest ? 'Top Anime' : 'All');
@@ -103,4 +103,4 @@ function Animelistings({ guest }) {
     );
 }
 
-export default Animelistings;
+export default AnimeListings;

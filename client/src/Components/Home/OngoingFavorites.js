@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import UserContext from '../../Context/UserContext'
+import { API } from '../../Hooks/API';
 import GenericHorizontalList from '../GenericComponents/GenericHorizontalList';
 
 const APIUrl = process.env.REACT_APP_API_URL;
@@ -45,12 +46,9 @@ const OngoingFavorites = ({ type }) => {
 
     const handleUpdateItem = async() => {
         if(!resultsFavorites[updatedItem.arrayIndex]) return;
-
-        const res = await fetch(`${APIUrl}/favorites/favorite/${user.id}/${updatedItem.contentId}/${type}`);
-        const UpdatedFavorite = await res.json();
-
+        const { data } = await API('GET', `${APIUrl}/favorites/favorite/${user.id}/${updatedItem.contentId}/${type}`, true);
         const favoritesCopy = [...resultsFavorites];
-        favoritesCopy[updatedItem.arrayIndex] = UpdatedFavorite;
+        favoritesCopy[updatedItem.arrayIndex] = data;
         setResultsFavorites(favoritesCopy);
     }
 
@@ -59,41 +57,28 @@ const OngoingFavorites = ({ type }) => {
 
         if(!isNaN(totalCount)) {
             if(currentCount + 1 > parseInt(totalCount)) return toast.error(`Can't add more episodes.`, { position: 'bottom-right' })
-            if(currentCount + 1 === parseInt(totalCount)) isCompleted = true;
+            if(totalCount + 1 === parseInt(totalCount)) isCompleted = true;
         }
 
-        try {
-            const body = { 
-                count: currentCount + 1,
-                completed: isCompleted,
-                id: user.id,
-                id_content: id,
-                type: type
-            };
+        const body = { 
+            count: currentCount + 1,
+            completed: isCompleted,
+            id: user.id,
+            id_content: id,
+            type: type
+        };
 
-            const res = await fetch(`${APIUrl}/favorites/counter`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const { status, statusMessage } = await API('PUT', `${APIUrl}/favorites/counter`, null, body);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
 
-            if (res.status === 200) {
-                setUpdatedItem({ arrayIndex: arrayIndex, contentId: id});
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if (status === 200) {
+            setUpdatedItem({ arrayIndex: arrayIndex, contentId: id});
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
@@ -106,13 +91,9 @@ const OngoingFavorites = ({ type }) => {
     }
 
 	const getOngoingFavorites = async() => {
-		const res = await fetch(`${APIUrl}/favorites/ongoing/${user.id}/${type}?page=${currentPage}`);
-		const OngoingFavoriteArray = await res.json();
-
-        OngoingFavoriteArray.length === 0 ? setHasMore(false) : setHasMore(true);
-
-        setResultsFavorites(resultsFavorites.concat(OngoingFavoriteArray));
-
+        const { data } = await API('GET', `${APIUrl}/favorites/ongoing/${user.id}/${type}?page=${currentPage}`, true);
+        data.length === 0 ? setHasMore(false) : setHasMore(true);
+        setResultsFavorites(resultsFavorites.concat(data));
         setLoading(false);
     }
 

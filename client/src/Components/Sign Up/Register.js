@@ -5,12 +5,13 @@ import { Link } from 'react-router-dom';
 import { Titulo } from '../Styled Components/text';
 import { Form, FormWrapper, FullPageWrapper, IMGPreview, InfoWrapper, InputWrapper } from '../Styled Components/form';
 import { Btn } from '../Styled Components/btn';
+import { API } from '../../Hooks/API';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-const RegisterUser = () => {
+const Register = () => {
     document.title = 'Sign Up • AniDash';
     
     const [avatar, setAvatar] = useState('');
@@ -28,14 +29,8 @@ const RegisterUser = () => {
     }
 
     const handleFile = async e => {
-        const file = e.target.files[0];
-       
-        previewFile(file);
-    }
-
-    const previewFile = file => {
         const reader = new FileReader();
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(e.target.files[0]);
         reader.onloadend = () => {
             setAvatar(reader.result)
         }
@@ -46,33 +41,27 @@ const RegisterUser = () => {
 
         if(password !== Cpassword) return toast.error('Passwords do not match.', { position: 'bottom-right' });
 
-        try {
-            const body = { username, email, password, avatar };
-            const res = await fetch(`${APIUrl}/users`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const body = { 
+            username, 
+            email, 
+            password, 
+            avatar 
+        };
 
-            if(res.status === 200) {
-                toast.success('Account created! Please confirm your email.', { position: 'bottom-right' });
-                setAvatar('');
-                setInputs({
-                    username: '',
-                    email: '',
-                    password: '',
-                    Cpassword: ''
-                });
-            }
-            else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        const { status, statusMessage } = await API('POST', `${APIUrl}/users`, null, body);
+
+        if(status === 200) {
+            toast.success('Account created! Please confirm your email.', { position: 'bottom-right' });
+            setAvatar('');
+            setInputs({
+                username: '',
+                email: '',
+                password: '',
+                Cpassword: ''
+            });
+        }
+        else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
@@ -112,4 +101,4 @@ const RegisterUser = () => {
     );
 }
 
-export default RegisterUser;
+export default Register;

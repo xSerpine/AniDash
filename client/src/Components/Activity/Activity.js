@@ -3,19 +3,20 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';
 import { Spinner } from '../Styled Components/loader';
-import { ContentWrapper, Activity } from '../Styled Components/content';
+import { ContentWrapper, ActivityContent } from '../Styled Components/content';
 import { Link } from 'react-router-dom';
 import { SpacingElement } from '../Styled Components/navbar';
 import { SubTitulo, Titulo } from '../Styled Components/text';
 import { InputWrapper } from '../Styled Components/form';
 import { Btn } from '../Styled Components/btn';
 import UserContext from '../../Context/UserContext';
+import { API } from '../../Hooks/API';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-const UserActivity = () => {
+const Activity = () => {
     document.title = 'Activity • AniDash';
 
     const user = useContext(UserContext);
@@ -41,10 +42,9 @@ const UserActivity = () => {
     }, [loading, hasMore])
 
     const getActivity = async() => {
-        const res = await fetch(`${APIUrl}/activity/${user.id}?page=${currentPage}`);
-        const ActivityArray = await res.json();
-        ActivityArray.length === 0 ? setHasMore(false) : setHasMore(true);
-        setActivity(activity.concat(ActivityArray));
+        const { data } = await API('GET', `${APIUrl}/activity/${user.id}?page=${currentPage}`, true);
+        data.length === 0 ? setHasMore(false) : setHasMore(true);
+        setActivity(activity.concat(data));
         setLoading(false);
     }
 
@@ -57,39 +57,27 @@ const UserActivity = () => {
     const addStatus = async() => {
         if(10 >= value.length || value.length >= 250) return toast.error('Status must have between 10 and 250 characters.', { position: 'bottom-right' });
 
-        try {
-            const body = { 
-                id: user.id, 
-                status: value
-            };
-            const res = await fetch(`${APIUrl}/activity`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const body = { 
+            id: user.id, 
+            status: value
+        };
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
+        const { status, statusMessage } = await API('POST', `${APIUrl}/activity`, null, body); 
 
-            if(res.status === 200) {
-                toast.success('Status added with success!', { position: 'bottom-right' });
-                setValue('');
-                setCurrentPage(1);
-                setActivity([]);
-                setUpdate(!update);
-            }
-            else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        if(status === 200) {
+            toast.success('Status added with success!', { position: 'bottom-right' });
+            setValue('');
+            setCurrentPage(1);
+            setActivity([]);
+            setUpdate(!update);
+        }
+        else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
@@ -105,7 +93,7 @@ const UserActivity = () => {
             {activity.length > 0 && 
                 activity.map((activityItem, index) => (
                     <div key={index}>
-                        <Activity ref={activity.length === index + 1 ? lastElement : undefined}>
+                        <ActivityContent ref={activity.length === index + 1 ? lastElement : undefined}>
                             <div>
                                 {activityItem.action === 'added' &&
                                     <SubTitulo><Link to={`/profile/${activityItem.username}`}>{activityItem.username}</Link> has added <Link to={`/${activityItem.type_content}/${activityItem.id_content}`}>{activityItem.content}</Link> to their list!</SubTitulo>
@@ -129,7 +117,7 @@ const UserActivity = () => {
                                 )}
                                 <SubTitulo style={{textAlign: 'right'}}>{activityItem.hour && moment(activityItem.hour.slice(0,10)).format('DD-MM-YYYY')} at {activityItem.hour && activityItem.hour.slice(11,16)}</SubTitulo>
                             </div>
-                        </Activity>
+                        </ActivityContent>
                         <br/>
                     </div>
                 ))
@@ -143,4 +131,4 @@ const UserActivity = () => {
     );
 }
 
-export default UserActivity;
+export default Activity;

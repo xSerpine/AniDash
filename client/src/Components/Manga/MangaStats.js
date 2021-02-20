@@ -2,17 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { SpacingElement } from '../Styled Components/navbar';
 import { Spinner } from '../Styled Components/loader';
 import GenericContentStats from '../GenericComponents/GenericContentStats';
+import { API } from '../../Hooks/API';
 
-function MangaStats({ id_manga }) {
+const MangaStats = ({ id_manga }) => {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState([]);
 
     const getStats = async() => {
-        const res = await fetch(`https://api.jikan.moe/v3/manga/${id_manga}/stats`);
-        const StatsArray = await res.json();
-
-        setStats(StatsArray);
-
+        const { data } = await API('GET', `https://api.jikan.moe/v3/manga/${id_manga}/stats`);    
+        setStats(data);
         setLoading(false);
     }
 

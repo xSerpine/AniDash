@@ -5,6 +5,7 @@ import { ContentWrapper, ContentInfo, NoContent } from '../Styled Components/con
 import { Titulo } from '../Styled Components/text';
 import { InputWrapper } from '../Styled Components/form';
 import { Spinner } from '../Styled Components/loader';
+import { API } from '../../Hooks/API';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
@@ -39,13 +40,9 @@ const BrowseUsers = () => {
 
     const getSearchResults = async() => {
         if(user) {
-            const res = await fetch(`${APIUrl}/users/search/${user.toLowerCase()}?page=${currentPage}`);
-            const SearchResultsUsersArray = await res.json();
-
-            SearchResultsUsersArray.length === 0 && setHasMore(false);
-
-            setSearchResultsUsers(searchResultsUsers.concat(SearchResultsUsersArray));
-
+            const { data } = await API('GET', `${APIUrl}/users/search/${user.toLowerCase()}?page=${currentPage}`, true);
+            data.length === 0 && setHasMore(false);
+            setSearchResultsUsers(searchResultsUsers.concat(data));
             setLoading(false);
         }
     }

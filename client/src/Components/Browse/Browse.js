@@ -5,7 +5,7 @@ import { Titulo } from '../Styled Components/text';
 import BrowseUsers from './BrowseUsers';
 import { SpacingElement } from '../Styled Components/navbar';
 
-const BrowseAniDash = ({ guest }) => {
+const Browse = ({ guest }) => {
     document.title = 'Browse • AniDash';
     
     const [option, setOption] = useState(guest ? 'Anime/Manga' : undefined);
@@ -35,4 +35,4 @@ const BrowseAniDash = ({ guest }) => {
     );
 }
 
-export default BrowseAniDash;
+export default Browse;

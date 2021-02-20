@@ -28,6 +28,15 @@ const Spinner = styled.div`
     }
 `;
 
+const SpinnerWithText = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+`;
+
 export {
-    Spinner
+    Spinner,
+    SpinnerWithText
 }

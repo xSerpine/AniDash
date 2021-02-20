@@ -2,17 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { SpacingElement } from '../Styled Components/navbar';
 import { Spinner } from '../Styled Components/loader';
 import GenericContentCharacters from '../GenericComponents/GenericContentCharacters';
+import { API } from '../../Hooks/API';
 
 function MangaCharacters({ id_manga }) {
     const [loading, setLoading] = useState(true);
     const [characters, setCharacters] = useState([]);
 
     const getCharacters = async() => {
-        const res = await fetch(`https://api.jikan.moe/v3/manga/${id_manga}/characters`);
-        const CharactersArray = await res.json();
-
-        setCharacters(CharactersArray.characters);
-
+        const { data } = await API('GET', `https://api.jikan.moe/v3/manga/${id_manga}/characters`);
+        setCharacters(data.characters);
         setLoading(false);
     }
 

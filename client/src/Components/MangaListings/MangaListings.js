@@ -5,7 +5,7 @@ import { Titulo } from '../Styled Components/text';
 import FavoriteMangaList from './FavoriteMangaList';
 import TopMangaList from './TopMangaList';
 
-function Mangalistings({ guest }) {
+const MangaListings = ({ guest }) => {
     document.title = 'Manga Lists • AniDash';
 
     const [key, setKey] = useState(0);
@@ -69,4 +69,4 @@ function Mangalistings({ guest }) {
     );
 }
 
-export default Mangalistings;
+export default MangaListings;

@@ -6,7 +6,7 @@ import { Titulo } from '../Styled Components/text';
 import { Fragment } from 'react';
 import UserContext from '../../Context/UserContext';
 
-function NavBar({ guest, handleToggle, logout }) {
+const NavBar = ({ guest, handleToggle, logout }) => {
     const user = useContext(UserContext);
 
     const [isScroll, setIsScroll] = useState(false);

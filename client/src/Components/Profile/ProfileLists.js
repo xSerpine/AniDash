@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { API } from '../../Hooks/API';
 import GenericContentList from '../GenericComponents/GenericContentList';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
-function ProfileLists({ user, type, typeStyles, profile, item1, item2, item3, emptyMessage }) {
+const ProfileLists = ({ user, type, typeStyles, profile, item1, item2, item3, emptyMessage }) => {
     const [loading, setLoading] = useState(true);
     const [hasMore, setHasMore] = useState(false);
     const [currentPage, setcurrentPage] = useState(1);
@@ -23,20 +24,17 @@ function ProfileLists({ user, type, typeStyles, profile, item1, item2, item3, em
     }, [loading, hasMore])
 
     const getContent = async() => {
-        const res = await fetch(
+        const { data } = await API(
+            'GET', 
             type === 'profile' ?
                 `${APIUrl}/follows/${user.username}?page=${currentPage}`
                 :
-                `${APIUrl}/favorites/${user._id}/${type}?page=${currentPage}`
-            );
-        const ContentArray = await res.json();
-        
-        const ListContent = profile ? ContentArray[profile] : ContentArray;
-
+                `${APIUrl}/favorites/${user._id}/${type}?page=${currentPage}`, 
+            true
+        );
+        const ListContent = profile ? data[profile] : data;
         ListContent.length === 0 ? setHasMore(false) : setHasMore(true);
-
         setContent(content.concat(ListContent));
-
         setLoading(false);
     }
 

@@ -651,7 +651,7 @@ const SearchOptions = styled.div`
     }
 `;
 
-const Activity = styled.div`
+const ActivityContent = styled.div`
     padding: 1rem;
     text-align: center;
     background: #1c2541;
@@ -733,6 +733,37 @@ const Message = styled.div`
     }
 `;
 
+const AdContent = styled.div`
+    width: 80%;
+    margin: 0 auto;
+    background-color: #1b2e68;
+    color: #fff;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    font-size: 20px;
+    border-radius: 5px;
+    & div {
+        padding: 2rem;
+        width: 100%;
+        text-align: center;
+    }
+    & div:last-child {
+        border-left: 2px solid #0b132b;
+        text-align: justify;
+        line-height: 1.5;
+    }
+    @media (max-width: 768px) {
+        flex-direction: column;
+        & div:last-child {
+            border-top: 4px solid #0b132b;
+        }
+        & div:last-child ul li {
+            width: 90%;
+        }
+    }
+`;
+
 export {
     ContentInfoBar,
     AddItem,
@@ -754,8 +785,9 @@ export {
     Items,
     TituloWrapper,
     SearchOptions,
-    Activity,
+    ActivityContent,
     NoContent,
     TextWrapper,
-    Message
+    Message,
+    AdContent
 }

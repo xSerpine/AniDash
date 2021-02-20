@@ -5,12 +5,13 @@ import { Link } from 'react-router-dom';
 import { Form, FormWrapper, FullPageWrapper, InfoWrapper, InputWrapper } from '../Styled Components/form';
 import { Btn } from '../Styled Components/btn';
 import { Titulo } from '../Styled Components/text';
+import { API } from '../../Hooks/API';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-const LoginUser = ({ setAuth, setUserData }) => {
+const Login = ({ setAuth, setUserData }) => {
     document.title = 'Login • AniDash';
     
     const [inputs, setInputs] = useState({
@@ -26,39 +27,29 @@ const LoginUser = ({ setAuth, setUserData }) => {
     
     const onSubmitForm = async e => {
         e.preventDefault();
-        try {
-            const body = { user, password };
-            const res = await fetch(`${APIUrl}/auth/login`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
-    
-            if (res.status === 200) {
-                const parseRes = await res.json();
-                
-                toast.success(`Welcome to AniDash, ${parseRes.userInfo.username}!`, { position: 'bottom-right' });
-                localStorage.setItem('jwtToken', parseRes.jwtToken);
-                localStorage.setItem('user', JSON.stringify({
-                    id: parseRes.userInfo._id,
-                    username: parseRes.userInfo.username,
-                    email: parseRes.userInfo.email,
-                    avatar: parseRes.userInfo.avatar,
-                    SFW: parseRes.userInfo.sfw
-                }))
-                setUserData(parseRes.userInfo._id, parseRes.userInfo.username, parseRes.userInfo.email, parseRes.userInfo.avatar, parseRes.userInfo.sfw);
-  
-                setAuth(true);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-                setAuth(false);
-            }
-        } catch (error) {
-            console.error(error);
+
+        const body = { 
+            user, 
+            password 
+        };
+        const { status, statusMessage, data } = await API('POST', `${APIUrl}/auth/login`, null, body);
+
+        if (status === 200) {            
+            toast.success(`Welcome to AniDash, ${data.userInfo.username}!`, { position: 'bottom-right' });
+            localStorage.setItem('jwtToken', data.jwtToken);
+            localStorage.setItem('user', JSON.stringify({
+                id: data.userInfo._id,
+                username: data.userInfo.username,
+                email: data.userInfo.email,
+                avatar: data.userInfo.avatar,
+                SFW: data.userInfo.sfw
+            }))
+            setUserData(data.userInfo._id, data.userInfo.username, data.userInfo.email, data.userInfo.avatar, data.userInfo.sfw);
+
+            setAuth(true);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
+            setAuth(false);
         }
     }
 
@@ -87,4 +78,4 @@ const LoginUser = ({ setAuth, setUserData }) => {
     );
 }
 
-export default LoginUser;
+export default Login;

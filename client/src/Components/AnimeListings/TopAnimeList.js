@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { API } from '../../Hooks/API';
 import GenericContentList from '../GenericComponents/GenericContentList';
 import { Spinner } from '../Styled Components/loader';
 
@@ -22,13 +23,9 @@ const TopAnimeList = ({ guest }) => {
     }, [loading, hasMore]);
 
     const getTopAnime = async() => {
-        const res = await fetch(`https://api.jikan.moe/v3/top/anime/${currentPage}`);
-        const TopAnimeArray = await res.json();
-
-        TopAnimeArray.top.length === 0 ? setHasMore(false) : setHasMore(true);
-
-        setTopAnime(topAnime.concat(TopAnimeArray.top));
-
+        const { data } = await API('GET', `https://api.jikan.moe/v3/top/anime/${currentPage}`);
+        data.top.length === 0 ? setHasMore(false) : setHasMore(true);
+        setTopAnime(topAnime.concat(data.top));
         setLoading(false);
     }
 

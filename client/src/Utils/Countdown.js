@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 
 const week = ['Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays', 'Sundays']
 
-function Countdown({airingDate, airingTime, type}) {
+const Countdown = ({ airingDate, airingTime, type }) => {
     const [timeLeft, setTimeLeft] = useState({
         days: 0,
         hours: 0,

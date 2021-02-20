@@ -10,12 +10,13 @@ import { useHistory, useParams } from 'react-router-dom';
 import { Spinner } from '../Styled Components/loader';
 import { ProfileDetailedStats } from '../Styled Components/profile';
 import { Titulo } from '../Styled Components/text';
+import { API } from '../../Hooks/API';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-function UserProfile() {
+const Profile = () => {
     const user = useContext(UserContext);
     const history = useHistory();
 
@@ -48,98 +49,68 @@ function UserProfile() {
     }
 
     const handleAddFollow = async() => {
-        try {
-            const body = { 
-                id: profile._id, 
-                id_follower: user.id, 
-            };
+        const body = { 
+            id: profile._id, 
+            id_follower: user.id, 
+        };
 
-            const res = await fetch(`${APIUrl}/follows`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const { status, statusMessage } = await API('POST', `${APIUrl}/follows`, null, body);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
-    
-            if (res.status === 200) {
-                toast.success(`You're now following ${profile.username}`, { position: 'bottom-right' });
-                setUpdate(!update);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        if(status === 200) {
+            toast.success(`You're now following ${profile.username}`, { position: 'bottom-right' });
+            setUpdate(!update);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
     const handleRemoveFollow = async() => {
-        try {
-            const body = { 
-                id: profile._id, 
-                id_follower: user.id,  
-            };
+        const body = { 
+            id: profile._id, 
+            id_follower: user.id,  
+        };
 
-            const res = await fetch(`${APIUrl}/follows`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const { status, statusMessage } = await API('DELETE', `${APIUrl}/follows`, null, body);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
-    
-            if (res.status === 200) {
-                toast.success(`You stopped following ${profile.username}`, { position: 'bottom-right' });
-                setUpdate(!update);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        if(status === 200) {
+            toast.success(`You stopped following ${profile.username}`, { position: 'bottom-right' });
+            setUpdate(!update);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
     const checkIfFollow = async() => {
-        const res = await fetch(`${APIUrl}/follows/${username}/${user.id}`);
-        const parseRes = await res.json();
-        setIsFollow(parseRes);
+        const { data } = await API('GET', `${APIUrl}/follows/${username}/${user.id}`, true);
+        setIsFollow(data);
     }
 
     const getProfile = async() => {
-        const res = await fetch(`${APIUrl}/users/${username}`);
-        if(res.status === 404) return history.push('/404');
-        const ProfileArray = await res.json();
-        setProfile(ProfileArray);
+        const { status, data } = await API('GET', `${APIUrl}/users/${username}`, true);
+        if(status === 404) return history.push('/404');
+        setProfile(data);
     }
 
     const getStats = async() => {
-        const res = await fetch(`${APIUrl}/users/stats/${username}`);
-        const StatsArray = await res.json();
-
+        const { data } = await API('GET', `${APIUrl}/users/stats/${username}`, true);
         setStats({
-            animeCount: StatsArray.anime,
-            mangaCount: StatsArray.manga,
-            followersCount: StatsArray.followers,
-            followingCount: StatsArray.following,
-            timeSpent: StatsArray.timeSpent,
-            episodesCount: StatsArray.episodes,
-            chaptersCount: StatsArray.chapters
+            animeCount: data.anime,
+            mangaCount: data.manga,
+            followersCount: data.followers,
+            followingCount: data.following,
+            timeSpent: data.timeSpent,
+            episodesCount: data.episodes,
+            chaptersCount: data.chapters
         });
     }
 
@@ -152,7 +123,6 @@ function UserProfile() {
 
     useEffect(() => {
         window.scrollTo(0, 0);
-        checkIfFollow();
         getProfile();
         getStats();
         const loadingTime = setTimeout(() => {
@@ -278,4 +248,4 @@ function UserProfile() {
     );
 }
 
-export default UserProfile;
+export default Profile;

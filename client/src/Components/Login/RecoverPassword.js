@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { API } from '../../Hooks/API';
 import { Btn } from '../Styled Components/btn';
 import { Form, FormWrapper, FullPageWrapper, InfoWrapper, InputWrapper } from '../Styled Components/form';
 import { Titulo } from '../Styled Components/text';
@@ -31,33 +32,22 @@ const RecoverPassword = () => {
 
         if(password !== Cpassword) return toast.error('Passwords do not match.', { position: 'bottom-right' });
 
-        try {
-            const body = {
-                token: token,
-                password: password
-            }
-            const res = await fetch(`${APIUrl}/users/recover`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const body = {
+            token: token,
+            password: password
+        }
 
-            if (res.status === 200) {
-                toast.success('Password has been updated! You can now login.', { position: 'bottom-right' });
-                setInputs({
-                    password: '',
-                    Cpassword: ''
-                });
-                setRecovered(true);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.log(error);
+        const { status, statusMessage } = API('PUT', `${APIUrl}/users/recover`, null, body);
+
+        if (status === 200) {
+            toast.success('Password has been updated! You can now login.', { position: 'bottom-right' });
+            setInputs({
+                password: '',
+                Cpassword: ''
+            });
+            setRecovered(true);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 

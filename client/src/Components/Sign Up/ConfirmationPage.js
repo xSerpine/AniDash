@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { API } from '../../Hooks/API';
 import { Message } from '../Styled Components/content';
 import { FullPageWrapper } from '../Styled Components/form';
 import { Spinner } from '../Styled Components/loader';
@@ -19,30 +20,19 @@ const ConfirmationPage = () => {
     const { token } = useParams();
 
     const confirm = async() => {
-        try {
-            const body = {
-                token: token
-            }
-            const res = await fetch(`${APIUrl}/users/confirm`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
-
-            if (res.status === 200) {
-                setConfirmed(true);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-
-            setLoading(false);
-        } catch (error) {
-            console.log(error);
+        const body = {
+            token: token
         }
+
+        const { status, statusMessage } = await API('PUT', `${APIUrl}/users/confirm`, null, body);
+
+        if (status === 200) {
+            setConfirmed(true);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
+        }
+
+        setLoading(false);
     }
 
     useEffect(() => {

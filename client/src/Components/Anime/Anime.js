@@ -12,12 +12,13 @@ import GenericContentOverview from '../GenericComponents/GenericContentOverview'
 import AnimeStats from './AnimeStats';
 import AnimeCharacters from './AnimeCharacters';
 import AnimeTracking from './AnimeTracking';
+import { API } from '../../Hooks/API';
 
 const APIUrl = process.env.REACT_APP_API_URL;
 
 toast.configure();
 
-const AnimeInfo = ({ guest }) => {
+const Anime = ({ guest }) => {
     const user = useContext(UserContext);
     const history = useHistory();
 
@@ -51,148 +52,109 @@ const AnimeInfo = ({ guest }) => {
     const handleSelectedOption = async(selectedOption) => {
         if(selectedOption) handleAddFavorite(false);
 
-        try {
-            const body = { 
-                progress: selectedOption,
-                id: user.id,
-                id_content: id_anime,
-                type: 'anime'
-            };
+        const body = { 
+            progress: selectedOption,
+            id: user.id,
+            id_content: id_anime,
+            type: 'anime'
+        };
 
-            const res = await fetch(`${APIUrl}/favorites/progress`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const { status, statusMessage } = await API('PUT', `${APIUrl}/favorites/progress`, null, body);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
-    
-            if (res.status === 200) {
-                toast.info(`Anime set as ${selectedOption} sucessfully!`, { position: 'bottom-right' });
-                setUpdate(!update);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        if (status === 200) {
+            toast.info(`Anime set as ${selectedOption} sucessfully!`, { position: 'bottom-right' });
+            setUpdate(!update);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
     const handleAddFavorite = async(updateNow) => {
         if(isFavorite) return;
 
-        try {
-            const body = { 
-                id: user.id, 
-                id_anime: anime.mal_id, 
-                type_anime: anime.type ? anime.type : 'N/A', 
-                name: anime.title, 
-                image: anime.image_url ? anime.image_url.replace('.jpg', 'l.jpg') : 'N/A', 
-                episodes: anime.episodes ? anime.episodes : 'N/A', 
-                status: anime.status ? anime.status : 'N/A',
-                airing_start: anime.airing_start ? anime.airing_start : 'N/A', 
-                broadcast: anime.broadcast ? anime.broadcast : 'N/A', 
-                score: anime.score ? anime.score : 'N/A', 
-                url: anime.url, 
-                synopsis: anime.synopsis ? anime.synopsis : 'N/A'
-            };
+        const body = { 
+            id: user.id, 
+            id_anime: anime.mal_id, 
+            type_anime: anime.type ? anime.type : 'N/A', 
+            name: anime.title, 
+            image: anime.image_url ? anime.image_url.replace('.jpg', 'l.jpg') : 'N/A', 
+            episodes: anime.episodes ? anime.episodes : 'N/A', 
+            status: anime.status ? anime.status : 'N/A',
+            airing_start: anime.airing_start ? anime.airing_start : 'N/A', 
+            broadcast: anime.broadcast ? anime.broadcast : 'N/A', 
+            score: anime.score ? anime.score : 'N/A', 
+            url: anime.url, 
+            synopsis: anime.synopsis ? anime.synopsis : 'N/A'
+        };
 
-            const res = await fetch(`${APIUrl}/favorites/anime`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    },
-                    body: JSON.stringify(body)
-                }
-            );
+        const { status, statusMessage } = await API('POST', `${APIUrl}/favorites/anime`, null, body);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
 
-            if (res.status === 200) {
-                toast.info(`${anime.title} added to your list!`, { position: 'bottom-right' });
-                updateNow && setUpdate(!update);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 200) {
+            toast.info(`${anime.title} added to your list!`, { position: 'bottom-right' });
+            updateNow && setUpdate(!update);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
     const handleRemoveFavorite = async() => {
-        try {
-            const res = await fetch(`${APIUrl}/favorites/${user.id}/${id_anime}/anime`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-type': 'application/json',
-                        'Authorization': localStorage.getItem('jwtToken')
-                    }
-                }
-            );
+        const { status, statusMessage } = await API('DELETE', `${APIUrl}/favorites/${user.id}/${id_anime}/anime`);
 
-            if(res.status === 401) {
-                localStorage.clear();
-                window.location.reload();
-            }
-            
-            if (res.status === 200) {
-                toast.info(`${anime.title} removed from your list!`, { position: 'bottom-right' });
-                setUpdate(!update);
-            } else {
-                toast.error(await res.text(), { position: 'bottom-right' });
-            }
-        } catch (error) {
-            console.error(error);
+        if(status === 401) {
+            localStorage.clear();
+            window.location.reload();
+        }
+        
+        if(status === 200) {
+            toast.info(`${anime.title} removed from your list!`, { position: 'bottom-right' });
+            setUpdate(!update);
+        } else {
+            toast.error(statusMessage, { position: 'bottom-right' });
         }
     }
 
     const checkIfFavorite = async() => {
         if(guest) return;
+        const { data } = await API('GET', `${APIUrl}/favorites/${user.id}/${id_anime}/anime`, true);
+        setIsFavorite(data);
+    }
 
-        const res = await fetch(`${APIUrl}/favorites/${user.id}/${id_anime}/anime`);
-        const parseRes = await res.json();
-        setIsFavorite(parseRes);
-
-        const resAnimeFavorites = await fetch(`${APIUrl}/favorites/${user.id}/anime`);
-        const AnimeFavoritesArray = await resAnimeFavorites.json();
-        const filteredAnimeFavoritesArray = [...AnimeFavoritesArray].filter(anime => anime.id_anime === parseInt(id_anime));
-        setProgress(filteredAnimeFavoritesArray.length > 0 ? filteredAnimeFavoritesArray[0].progress : 'Add to list');
+    const getAnimeFavorite = async() => {
+        if(guest) return;
+        const { data } = await API('GET', `${APIUrl}/favorites/favorite/${user.id}/${id_anime}/anime`, true);
+        setProgress(data ? data.progress : 'Add to list');
     }
 
     const getAnime = async() => {
-        const res = await fetch(`https://api.jikan.moe/v3/anime/${id_anime}`);
-        if(res.status === 404) return history.push('/404');
-        const AnimeArray = await res.json();
+        const { status, data } = await API('GET', `https://api.jikan.moe/v3/anime/${id_anime}`);
+        if(status === 404) return history.push('/404');
+        setAnime(data);
 
-        setAnime(AnimeArray);
-
-        document.title = `${AnimeArray.title} • AniDash`;
+        document.title = `${data.title} • AniDash`;
     }
 
     useEffect(() => {
         checkIfFavorite();
+        getAnimeFavorite();
 
         // eslint-disable-next-line
     }, [update])
 
     useEffect(() => {
         window.scrollTo(0, 0);
+        getAnime();
         checkIfFavorite();
-        getAnime();        
+        getAnimeFavorite();
         const loadingTime = setTimeout(() => {
             setLoading(false);
         }, 1000);
@@ -261,4 +223,4 @@ const AnimeInfo = ({ guest }) => {
     );
 }
 
-export default AnimeInfo;
+export default Anime;

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { SubTitulo, Titulo } from '../Styled Components/text';
 import UserContext from '../../Context/UserContext';
 
-function SideBar({ guest, estado, logout }) {
+const SideBar = ({ guest, estado, logout }) => {
     const user = useContext(UserContext);
 
     let classes = '';

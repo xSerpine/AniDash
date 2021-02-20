@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { API } from '../../Hooks/API';
 import GenericContentList from '../GenericComponents/GenericContentList';
 import { Spinner } from '../Styled Components/loader';
 
@@ -23,14 +24,13 @@ const BrowseResults = ({ type, title, SFW, guest }) => {
 
     const getSearchResults = async() => {
         if(title) {
-            const res = await fetch(`https://api.jikan.moe/v3/search/${type}?q=${title}&page=${currentPage}`);
-            const SearchResultsArray = await res.json();
-            SearchResultsArray.results.length === 0 ? setHasMore(false) : setHasMore(true);
-
+            const { data } = await API('GET', `https://api.jikan.moe/v3/search/${type}?q=${title}&page=${currentPage}`);
+            data.results.length === 0 ? setHasMore(false) : setHasMore(true);
+            
             const ResultsArray = type === 'anime' ? 
-                SearchResultsArray.results.filter(result => result.type !== 'Music') 
+                data.results.filter(result => result.type !== 'Music') 
                 : 
-                SearchResultsArray.results;
+                data.results;
             const SearchResults = SFW ? 
                 type === 'anime' ? 
                     ResultsArray.filter(result => result.rated !== 'Rx') 
@@ -39,9 +39,7 @@ const BrowseResults = ({ type, title, SFW, guest }) => {
                 :
                 ResultsArray;
 
-
             setSearchresults(currentPage > 1 ? searchResults.concat(SearchResults) : SearchResults);
-
             setLoading(false);
         }
     }

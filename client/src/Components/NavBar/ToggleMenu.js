@@ -1,7 +1,7 @@
 import React from 'react';
 import { ToggleBtn } from '../Styled Components/btn';
 
-function ToggleButton({handleToggle}) {
+const ToggleButton = ({ handleToggle }) => {
     return (
         <ToggleBtn onClick={handleToggle}>
             <div style={{width: '30px', height: '2px', backgroundColor: 'white'}} />

@@ -2,7 +2,7 @@ import React, { Fragment, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ContentInfo, TextWrapper, ContentCover, ContentActions, ContentRelated } from '../Styled Components/content';
 import { Titulo } from '../Styled Components/text';
-import ReadMoreReadLess from '../Utils/useReadMoreReadLess';
+import ReadMoreReadLess from '../../Utils/ReadMoreReadLess';
 
 const GenericContentInformation = ({
     guest,

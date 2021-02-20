@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { API } from '../../Hooks/API';
 import GenericContentList from '../GenericComponents/GenericContentList';
 import { Spinner } from '../Styled Components/loader';
 
@@ -22,13 +23,9 @@ const TopMangaList = ({ guest }) => {
     }, [loading, hasMore])
 
     const getTopManga = async() => {
-        const res = await fetch(`https://api.jikan.moe/v3/top/manga/${currentPage}`);
-        const TopMangaArray = await res.json();
-
-        TopMangaArray.length === 0 ? setHasMore(false) : setHasMore(true);
-
-        setTopManga(topManga.concat(TopMangaArray.top));
-
+        const { data } = await API('GET', `https://api.jikan.moe/v3/top/manga/${currentPage}`);
+        data.top.length === 0 ? setHasMore(false) : setHasMore(true);
+        setTopManga(topManga.concat(data.top));
         setLoading(false);
     }
 
