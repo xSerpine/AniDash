@@ -6,12 +6,12 @@ Uses the Jikan API for the anime/manga data.
 
 ## Some of the features:
    - Look up any anime or manga
-   - Add anime or manga to a list such as Planning, Watching/Reading, Completed and Dropped
-   - Keep track of episodes or chapters of your favorite anime/manga
+   - Add anime or manga to a list. Lists available are Planning, Watching/Reading, Completed and Dropped
+   - Keep track of anime episodes or manga chapters
    - Check which anime is airing today or tomorrow
    - Countdown timer for the next episode of an airing anime
    - Follow system where you can share your activity or thoughts with your followers
-   - Check top anime or manga, anime by season or your own anime/manga lists
+   - Check top anime/manga, anime by season or your own anime/manga lists
    - Guest session
     
 Client is hosted on Netlify
